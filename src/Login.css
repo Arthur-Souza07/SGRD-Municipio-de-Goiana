@@ -1,0 +1,296 @@
+* {
+  box-sizing: border-box;
+}
+
+.agent-login {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #ffffff;
+  color: #102f52;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.agent-login__content {
+  width: min(100%, 1136px);
+}
+
+.agent-login__header {
+  margin-bottom: 32px;
+}
+
+.agent-login__eyebrow {
+  margin: 0 0 10px;
+  color: #2588d8;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.025em;
+}
+
+.agent-login__header h1 {
+  margin: 0;
+  color: #12365b;
+  font-size: clamp(28px, 3vw, 34px);
+  line-height: 1.2;
+  font-weight: 750;
+}
+
+.agent-login__description {
+  margin: 12px 0 0;
+  color: #8193a8;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.agent-login__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1.08fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.agent-login__card {
+  min-width: 0;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #dce5ee;
+  border-radius: 11px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+}
+
+.agent-login__card h2 {
+  margin: 0 0 16px;
+  color: #183858;
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.agent-login__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 16px;
+  color: #172f4b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.agent-login__field input {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  padding: 0 13px;
+  border: 1px solid #d5e0ec;
+  border-radius: 9px;
+  outline: none;
+  background: #fff;
+  color: #172f4b;
+  font: inherit;
+  font-size: 15px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.agent-login__field input::placeholder {
+  color: #8293a9;
+  opacity: 1;
+}
+
+.agent-login__field input:focus {
+  border-color: #2476bd;
+  box-shadow: 0 0 0 3px rgb(36 118 189 / 14%);
+}
+
+.agent-login__password {
+  position: relative;
+  display: block;
+}
+
+.agent-login__password input {
+  padding-right: 48px;
+}
+
+.agent-login__eye {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #1768b4;
+  cursor: pointer;
+}
+
+.agent-login__eye svg,
+.agent-login__notice-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.agent-login__options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 26px 0 28px;
+  font-size: 13px;
+}
+
+.agent-login__remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1768b4;
+  cursor: pointer;
+}
+
+.agent-login__remember input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #1768b4;
+}
+
+.agent-login__text-button,
+.agent-login__register button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0865b7;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.agent-login__text-button:hover,
+.agent-login__register button:hover {
+  text-decoration: underline;
+}
+
+.agent-login__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #2169ad;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.agent-login__submit:hover {
+  background: #175a99;
+}
+
+.agent-login__submit:active {
+  transform: translateY(1px);
+}
+
+.agent-login__message {
+  margin: -12px 0 18px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #edf5fc;
+  color: #184f80;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.agent-login__register {
+  margin: 28px 0 10px;
+  color: #74869b;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.agent-login__notice {
+  padding: 16px;
+  border-radius: 8px;
+  background: #eaf3fc;
+  color: #1b3550;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.agent-login__notice-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+  color: #0965b6;
+}
+
+.agent-login__notice-title strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.agent-login__notice-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.agent-login__notice p {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .agent-login {
+    align-items: flex-start;
+    padding: 40px 18px 28px;
+  }
+
+  .agent-login__header {
+    margin-bottom: 24px;
+  }
+
+  .agent-login__layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .agent-login__notice {
+    order: -1;
+  }
+}
+
+@media (max-width: 420px) {
+  .agent-login {
+    padding: 28px 12px 20px;
+  }
+
+  .agent-login__card {
+    padding: 17px 14px;
+  }
+
+  .agent-login__options {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin: 20px 0 24px;
+  }
+
+  .agent-login__description {
+    font-size: 14px;
+  }
+}
