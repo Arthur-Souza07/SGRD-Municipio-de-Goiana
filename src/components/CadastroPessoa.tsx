@@ -61,5 +61,5 @@ export default function CadastroPessoa() {
       <section className="cad-card"><h2>Documentos e registro fotográfico</h2><label className="cad-field"><span>Fotos e documentos</span><input type="file" accept="image/*,.pdf" multiple onChange={selecionarArquivos}/></label><p>Arquivos selecionados: {arquivos.length}. O envio de anexos dependerá da API do projeto.</p></section>
       <div className="cad-actions"><p>Confira o CPF e capture o GPS antes de finalizar.</p><button className="cad-primary" type="submit" disabled={enviando}>{enviando ? <><span className="cad-spinner"/> Enviando...</> : 'Enviar cadastro'}</button></div>
       {mensagem && <p className="cad-feedback" role="status">{mensagem}</p>}
-    </form><footer className="cad-footer">Protótipo acadêmico. Não utilize dados pessoais reais até a implementação do backend e das medidas de segurança.</footer></main>;
+    </form><footer className="cad-footer">Fim.</footer></main>;
 }
