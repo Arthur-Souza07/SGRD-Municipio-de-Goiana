@@ -1,0 +1,265 @@
+.estado-aplicacao {
+  padding: 30px;
+}
+.pagina-cadastro-equipe {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.cad-navegacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: #53657e;
+}
+.cad-navegacao a,
+.cad-confirmacao a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: #0958b3;
+  font-weight: 600;
+}
+.cad-aviso {
+  padding: 13px 16px;
+  border: 1px solid #dce4ed;
+  border-radius: 9px;
+  background: #fff;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.cad-confirmacao {
+  padding: 14px 17px;
+  border: 1px solid #97c8b4;
+  border-radius: 9px;
+  background: #f1fbf6;
+  font-size: 12px;
+}
+.cad-confirmacao a {
+  margin-left: 10px;
+}
+.cad-header {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 24px 0;
+}
+.cad-header small {
+  color: #53657e;
+  font-weight: 600;
+  font-size: 11px;
+}
+.cad-header h1 {
+  margin: 8px 0;
+  font-size: clamp(22px, 3vw, 30px);
+  letter-spacing: -0.6px;
+}
+.cad-header p {
+  color: #53657e;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.cad-emblema {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 53px;
+  height: 58px;
+  border-radius: 12px;
+  background: #102e50;
+  color: white;
+  font-size: 28px;
+}
+.cad-card {
+  margin-bottom: 20px;
+  padding: 24px;
+  border: 1px solid #dce4ed;
+  border-radius: 12px;
+  background: #fff;
+}
+.cad-card h2 {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 22px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.cad-card h2 > span {
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: #eaf3ff;
+  color: #0958b3;
+  font-size: 12px;
+}
+.cad-card h3 {
+  font-size: 14px;
+}
+.cad-card p,
+.cad-actions p {
+  color: #53657e;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.cad-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.cad-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.cad-field :is(input, textarea, select) {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 12px;
+  border: 1px solid #bdccdc;
+  border-radius: 7px;
+  color: #173453;
+  background: #fff;
+  font-weight: 400;
+}
+.cad-field textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.cad-page button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 11px 15px;
+  border: 1px solid #bdccdc;
+  border-radius: 7px;
+  background: #fff;
+  color: #173453;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.cad-page button:hover:not(:disabled) {
+  border-color: #126bd3;
+  background: #eaf3ff;
+}
+.cad-page button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.cad-gps {
+  margin-top: 23px;
+  padding-top: 16px;
+  border-top: 1px solid #dce4ed;
+}
+.cad-coords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+}
+.cad-repeat {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #dce4ed;
+  border-radius: 9px;
+  background: #f8fbfe;
+}
+.cad-repeat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.cad-page .cad-danger {
+  color: #972635;
+}
+.cad-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.cad-page .cad-primary {
+  background: #126bd3;
+  color: white;
+  border-color: #126bd3;
+}
+.cad-page .cad-primary:hover:not(:disabled) {
+  background: #0958b3;
+  color: white;
+}
+.cad-feedback {
+  padding: 14px;
+  border: 1px solid #c2d6e9;
+  background: #eef6ff;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.cad-footer {
+  padding: 24px 0;
+  font-size: 11px;
+  color: #53657e;
+}
+.cad-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff70;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: girar-cadastro 0.8s linear infinite;
+}
+@keyframes girar-cadastro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 600px) {
+  .pagina-cadastro-equipe {
+    padding: 16px 12px;
+  }
+  .cad-card {
+    padding: 18px 14px;
+  }
+  .cad-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cad-header {
+    align-items: flex-start;
+    gap: 11px;
+  }
+  .cad-emblema {
+    width: 42px;
+    height: 46px;
+    font-size: 22px;
+  }
+  .cad-header h1 {
+    font-size: 22px;
+  }
+  .cad-repeat {
+    padding: 14px 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cad-page button {
+    transition: none;
+  }
+  .cad-spinner {
+    animation-duration: 2s;
+  }
+}
