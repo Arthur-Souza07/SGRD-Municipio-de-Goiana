@@ -227,6 +227,7 @@ export default function Login({
               <span className="agent-login__notice-icon"><LockIcon /></span>
               <strong>Acesso exclusivo</strong>
             </div>
+            
             <p>
               Somente agentes autorizados da Defesa Civil. Sua conta e este dispositivo
               precisam ser habilitados pela coordenação antes do primeiro acesso.
