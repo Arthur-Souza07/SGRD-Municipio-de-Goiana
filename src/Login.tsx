@@ -2,9 +2,12 @@ import { FormEvent, useState } from 'react'
 import './Login.css'
 
 type LoginCredentials = {
-  username: string
+  identifier: string // RM ou CPF (só números, no caso do CPF)
+  identifierType: 'cpf' | 'rm'
   password: string
   remember: boolean
+  deviceId: string // identifica o aparelho
+  deviceInfo: string // modelo/navegador, ajuda a coordenação
 }
 
 type LoginProps = {
@@ -12,6 +15,39 @@ type LoginProps = {
   onLogin?: (credentials: LoginCredentials) => void
   onForgotPassword?: () => void
   onRequestAccess?: () => void
+}
+
+// Gera um ID único na primeira vez e reaproveita nas próximas
+function getDeviceId(): string {
+  const key = 'agent-device-id'
+  try {
+    let id = localStorage.getItem(key)
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem(key, id)
+    }
+    return id
+  } catch {
+    return 'indisponivel'
+  }
+}
+
+// Validação padrão de CPF (dígitos verificadores)
+function isValidCpf(cpf: string): boolean {
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false
+
+  const calcDigit = (base: string, factor: number) => {
+    let sum = 0
+    for (const digit of base) {
+      sum += Number(digit) * factor--
+    }
+    const rest = (sum * 10) % 11
+    return rest === 10 ? 0 : rest
+  }
+
+  const d1 = calcDigit(cpf.slice(0, 9), 10)
+  const d2 = calcDigit(cpf.slice(0, 10), 11)
+  return d1 === Number(cpf[9]) && d2 === Number(cpf[10])
 }
 
 function LockIcon() {
@@ -42,23 +78,47 @@ export default function Login({
   onForgotPassword,
   onRequestAccess,
 }: LoginProps) {
-  const [username, setUsername] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
+  const [deviceId] = useState(getDeviceId)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage('')
 
-    if (!username.trim() || !password) {
-      setMessage('Informe sua matrícula ou e-mail e sua senha.')
+    const value = identifier.trim()
+    if (!value || !password) {
+      setMessage('Informe seu RM ou CPF e sua senha.')
+      return
+    }
+
+    // Se tiver 11 dígitos (mesmo com pontos/traço), tratamos como CPF.
+    const onlyDigits = value.replace(/\D/g, '')
+    const looksLikeCpf = onlyDigits.length === 11
+
+    if (looksLikeCpf && !isValidCpf(onlyDigits)) {
+      setMessage('CPF inválido. Confira os números digitados.')
+      return
+    }
+
+    if (!looksLikeCpf && value.length < 3) {
+      // Ajuste esta regra para o formato real do RM de vocês
+      setMessage('RM inválido. Confira o número digitado.')
       return
     }
 
     if (onLogin) {
-      onLogin({ username: username.trim(), password, remember })
+      onLogin({
+        identifier: looksLikeCpf ? onlyDigits : value,
+        identifierType: looksLikeCpf ? 'cpf' : 'rm',
+        password,
+        remember,
+        deviceId,
+        deviceInfo: navigator.userAgent,
+      })
       return
     }
 
@@ -97,15 +157,18 @@ export default function Login({
             <h2>Acesse sua conta</h2>
 
             <label className="agent-login__field">
-              <span>Matrícula ou e-mail institucional</span>
+              <span>RM ou CPF</span>
               <input
                 type="text"
                 name="username"
+                inputMode="text"
                 autoComplete="username"
-                placeholder="Informe sua matrícula ou e-mail"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                aria-label="Matrícula ou e-mail institucional"
+                autoCapitalize="none"
+                autoCorrect="off"
+                placeholder="Informe seu RM ou CPF"
+                value={identifier}
+                onChange={(event) => setIdentifier(event.target.value)}
+                aria-label="RM ou CPF"
               />
             </label>
 
@@ -139,7 +202,7 @@ export default function Login({
                   checked={remember}
                   onChange={(event) => setRemember(event.target.checked)}
                 />
-                <span>Mostrar senha</span>
+                <span>Manter conectado neste dispositivo</span>
               </label>
               <button className="agent-login__text-button" type="button" onClick={handleForgotPassword}>
                 Recuperar acesso
@@ -149,6 +212,10 @@ export default function Login({
             {message && <p className="agent-login__message" role="status">{message}</p>}
 
             <button className="agent-login__submit" type="submit">Entrar</button>
+
+            <p className="agent-login__device">
+              Dispositivo: <strong>{deviceId.slice(-8).toUpperCase()}</strong>
+            </p>
 
             <p className="agent-login__register">
               Ainda não tem conta?{' '}
@@ -162,7 +229,8 @@ export default function Login({
               <strong>Acesso exclusivo</strong>
             </div>
             <p>
-              Somente agentes autorizados. Contas aguardando autorização precisam de habilitação da coordenação.
+              Somente agentes autorizados da Defesa Civil. Sua conta e este dispositivo
+              precisam ser habilitados pela coordenação antes do primeiro acesso.
             </p>
           </aside>
         </div>

@@ -216,6 +216,13 @@
   line-height: 1.5;
 }
 
+.agent-login__device {
+  margin: 14px 0 0;
+  color: #74869b;
+  text-align: center;
+  font-size: 12px;
+}
+
 .agent-login__register {
   margin: 28px 0 10px;
   color: #74869b;
