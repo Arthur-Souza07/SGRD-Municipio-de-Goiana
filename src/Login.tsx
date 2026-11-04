@@ -222,7 +222,6 @@ export default function Login({
               <button type="button" onClick={handleRequestAccess}>Solicitar cadastro</button>
             </p>
           </form>
-
           <aside className="agent-login__notice" aria-label="Aviso de acesso exclusivo">
             <div className="agent-login__notice-title">
               <span className="agent-login__notice-icon"><LockIcon /></span>
