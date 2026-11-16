@@ -1,0 +1,243 @@
+/* ============================================================
+   Estilos EXCLUSIVOS da tela de cadastro.
+   O resto (cabeçalho, rodapé, campos, botões) vem do Login.css.
+   ============================================================ */
+
+/* Largura do conteúdo: cresce de celular para tablet e PC */
+.agent-register__content {
+  width: min(100%, 760px); /* celular e tablet em pé */
+}
+
+@media (min-width: 900px) {
+  .agent-register__content {
+    width: min(100%, 880px); /* tablet deitado e PC */
+  }
+}
+
+.agent-register__required-note {
+  margin: 14px 0 0;
+  color: #6f8197;
+  font-size: 14px;
+}
+
+/* ===== Seções do formulário (separadas por uma linha) ===== */
+.agent-register__section {
+  padding: 24px 0;
+  border-top: 1px solid #e3ebf3;
+}
+
+/* A primeira seção não precisa de linha em cima */
+.agent-register__section:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.agent-register__section h3 {
+  margin: 0 0 16px;
+  color: #183858;
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 650;
+}
+
+/* ===== Grade dos campos =====
+   Celular: 1 coluna. Tablet e PC: 2 colunas. */
+.agent-register__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 20px;
+}
+
+@media (min-width: 640px) {
+  .agent-register__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Campo que ocupa a linha inteira (nome, unidade) */
+  .agent-register__full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ===== Textos de apoio dentro dos campos ===== */
+.agent-register__optional {
+  color: #74869b;
+  font-weight: 400;
+}
+
+.agent-register__hint {
+  color: #74869b;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.agent-register__error {
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Campo com erro fica com borda vermelha */
+.agent-login__field input[aria-invalid="true"] {
+  border-color: #d92d20;
+}
+
+.agent-login__field input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 4px rgb(217 45 32 / 14%);
+}
+
+/* ===== "Como funciona" (3 passos) ===== */
+.agent-register__steps {
+  display: grid;
+  grid-template-columns: 1fr; /* celular: um embaixo do outro */
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 768px) {
+  .agent-register__steps {
+    grid-template-columns: repeat(3, 1fr); /* tablet e PC: lado a lado */
+    gap: 20px;
+  }
+}
+
+.agent-register__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.agent-register__step-number {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #eaf3fc;
+  color: #0965b6;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.agent-register__step strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #183858;
+  font-size: 16px;
+}
+
+.agent-register__step p {
+  margin: 0;
+  color: #5d7189;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ===== Privacidade e aceite ===== */
+.agent-register__text {
+  margin: 0 0 12px;
+  color: #5d7189;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.agent-register__details {
+  margin-bottom: 12px;
+  color: #5d7189;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.agent-register__details summary {
+  min-height: 44px; /* área de toque confortável */
+  display: flex;
+  align-items: center;
+  color: #0865b7;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.agent-register__details p {
+  margin: 0 0 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f4f8fc;
+}
+
+.agent-register__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  color: #172f4b;
+  font-size: 15px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.agent-register__consent input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: #1768b4;
+}
+
+/* Espaço entre o último bloco e o botão */
+.agent-register__section + .agent-login__message,
+.agent-register__section + .agent-login__submit {
+  margin-top: 8px;
+}
+
+/* ===== Tela de sucesso ===== */
+.agent-register__success {
+  text-align: center;
+}
+
+.agent-register__success-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #e7f6ec;
+  color: #157f3d;
+}
+
+.agent-register__success-icon svg {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.agent-register__success h2 {
+  margin: 0 0 12px;
+}
+
+.agent-register__success p {
+  margin: 0 0 8px;
+  color: #5d7189;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.agent-register__success .agent-login__submit {
+  margin-top: 20px;
+}
+
+/* ===== Celular pequeno ===== */
+@media (max-width: 600px) {
+  .agent-register__section {
+    padding: 20px 0;
+  }
+}
