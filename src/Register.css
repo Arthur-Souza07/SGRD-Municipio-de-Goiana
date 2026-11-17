@@ -1,6 +1,6 @@
 /* ============================================================
    Estilos EXCLUSIVOS da tela de cadastro.
-   O resto (cabeçalho, rodapé, campos, botões) vem do Login.css.
+   Não depende de classes internas do Login.css.
    ============================================================ */
 
 /* Largura do conteúdo: cresce de celular para tablet e PC */
@@ -18,6 +18,24 @@
   margin: 14px 0 0;
   color: #6f8197;
   font-size: 14px;
+}
+
+/* ===== Card do formulário (semelhante ao login, mas isolado) ===== */
+.agent-register__card {
+  min-width: 0;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #dce5ee;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+}
+
+.agent-register__card h2 {
+  margin: 0 0 20px;
+  color: #183858;
+  font-size: 24px;
+  line-height: 1.35;
+  font-weight: 500;
 }
 
 /* ===== Seções do formulário (separadas por uma linha) ===== */
@@ -59,6 +77,88 @@
   }
 }
 
+/* ===== Campo de formulário (base isolada) ===== */
+.agent-register__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: #172f4b;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.agent-register__field input {
+  width: 100%;
+  min-width: 0;
+  height: 56px;
+  padding: 0 16px;
+  border: 1px solid #d5e0ec;
+  border-radius: 10px;
+  outline: none;
+  background: #fff;
+  color: #172f4b;
+  font: inherit;
+  font-size: 16px; /* 16px evita zoom automático no iPad */
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.agent-register__field input::placeholder {
+  color: #8293a9;
+  opacity: 1;
+}
+
+.agent-register__field input:focus {
+  border-color: #2476bd;
+  box-shadow: 0 0 0 4px rgb(36 118 189 / 16%);
+}
+
+/* Campo com erro fica com borda vermelha */
+.agent-register__field input[aria-invalid="true"] {
+  border-color: #d92d20;
+}
+
+.agent-register__field input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 4px rgb(217 45 32 / 14%);
+}
+
+/* ===== Senha com botão de olho ===== */
+.agent-register__password {
+  position: relative;
+  display: block;
+}
+
+.agent-register__password input {
+  padding-right: 60px;
+}
+
+.agent-register__eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #1768b4;
+  cursor: pointer;
+}
+
+.agent-register__eye svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* ===== Textos de apoio dentro dos campos ===== */
 .agent-register__optional {
   color: #74869b;
@@ -77,15 +177,6 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
-}
-
-/* Campo com erro fica com borda vermelha */
-.agent-login__field input[aria-invalid="true"] {
-  border-color: #d92d20;
-}
-
-.agent-login__field input[aria-invalid="true"]:focus {
-  box-shadow: 0 0 0 4px rgb(217 45 32 / 14%);
 }
 
 /* ===== "Como funciona" (3 passos) ===== */
@@ -188,10 +279,121 @@
   accent-color: #1768b4;
 }
 
-/* Espaço entre o último bloco e o botão */
-.agent-register__section + .agent-login__message,
-.agent-register__section + .agent-login__submit {
-  margin-top: 8px;
+/* ===== Aviso de habilitação (notice) ===== */
+.agent-register__notice {
+  padding: 18px 20px;
+  border-radius: 10px;
+  background: #eaf3fc;
+  color: #1b3550;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.agent-register__notice-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: #0965b6;
+}
+
+.agent-register__notice-title strong {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.agent-register__notice-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.agent-register__notice-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.agent-register__notice p {
+  margin: 0;
+}
+
+/* ===== Mensagem geral de erro/sucesso ===== */
+.agent-register__message {
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #edf5fc;
+  color: #184f80;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ===== Botão de submit ===== */
+.agent-register__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 58px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #2169ad;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.agent-register__submit:hover:not(:disabled) {
+  background: #175a99;
+}
+
+.agent-register__submit:active:not(:disabled) {
+  background: #175a99;
+  transform: translateY(1px);
+}
+
+.agent-register__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== Dispositivo ===== */
+.agent-register__device {
+  margin: 16px 0 0;
+  color: #74869b;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* ===== Link para login ===== */
+.agent-register__register {
+  margin: 20px 0 4px;
+  color: #74869b;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.agent-register__register button {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #0865b7;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.agent-register__register button:hover {
+  text-decoration: underline;
 }
 
 /* ===== Tela de sucesso ===== */
@@ -231,13 +433,23 @@
   line-height: 1.6;
 }
 
-.agent-register__success .agent-login__submit {
+.agent-register__success .agent-register__submit {
   margin-top: 20px;
+}
+
+/* Espaço entre o último bloco e o botão */
+.agent-register__section + .agent-register__message,
+.agent-register__section + .agent-register__submit {
+  margin-top: 8px;
 }
 
 /* ===== Celular pequeno ===== */
 @media (max-width: 600px) {
   .agent-register__section {
     padding: 20px 0;
+  }
+
+  .agent-register__card {
+    padding: 20px 16px;
   }
 }

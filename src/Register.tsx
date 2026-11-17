@@ -1,13 +1,23 @@
-import { FormEvent, ReactNode, useState } from 'react'
-import './Login.css' // estilos compartilhados: cabeçalho, rodapé, campos, botões
-import './Register.css' // estilos exclusivos desta tela
+import { useState, useCallback } from 'react'
+import type { FormEvent, ReactNode } from 'react'
+import './Login.css'
+import './Register.css'
+import {
+  getDeviceId,
+  isValidCpf,
+  onlyDigits,
+  formatCpf,
+  formatPhone,
+  isValidEmail,
+} from './utils/auth'
+import { LockIcon, EyeIcon, CheckIcon } from './utils/icons'
 
 /* ============================================================
    TIPOS (descrevem o formato dos dados)
    ============================================================ */
 
 // Dados que serão enviados para o sistema quando a API existir
-type RegisterData = {
+export type RegisterData = {
   fullName: string
   registration: string // matrícula funcional (RM)
   cpf: string // só números
@@ -19,9 +29,9 @@ type RegisterData = {
   deviceInfo: string // modelo/navegador do aparelho
 }
 
-type RegisterProps = {
+export type RegisterProps = {
   // Conecte este callback ao envio real quando a API estiver disponível.
-  onRegister?: (data: RegisterData) => void
+  onRegister?: (data: RegisterData) => Promise<void> | void
   // Chamado ao clicar em "Acessar login" (volta para a tela de login)
   onBackToLogin?: () => void
 }
@@ -51,106 +61,6 @@ const emptyForm: FormValues = {
   phone: '',
   password: '',
   confirmPassword: '',
-}
-
-/* ============================================================
-   FUNÇÕES AUXILIARES (mesma lógica usada no Login)
-   ============================================================ */
-
-// Gera um ID único do aparelho na primeira vez e reaproveita depois
-function getDeviceId(): string {
-  const key = 'agent-device-id'
-  try {
-    let id = localStorage.getItem(key)
-    if (!id) {
-      id = crypto.randomUUID() // só funciona em HTTPS ou localhost
-      localStorage.setItem(key, id)
-    }
-    return id
-  } catch {
-    return 'indisponivel'
-  }
-}
-
-// Remove tudo que não for número ("123.456-78" vira "12345678")
-function onlyDigits(value: string): string {
-  return value.replace(/\D/g, '')
-}
-
-// Validação de CPF pelos dígitos verificadores
-function isValidCpf(cpf: string): boolean {
-  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false
-
-  const calcDigit = (base: string, factor: number) => {
-    let sum = 0
-    for (const digit of base) {
-      sum += Number(digit) * factor--
-    }
-    const rest = (sum * 10) % 11
-    return rest === 10 ? 0 : rest
-  }
-
-  const d1 = calcDigit(cpf.slice(0, 9), 10)
-  const d2 = calcDigit(cpf.slice(0, 10), 11)
-  return d1 === Number(cpf[9]) && d2 === Number(cpf[10])
-}
-
-// Máscara de CPF enquanto o usuário digita: 000.000.000-00
-function formatCpf(value: string): string {
-  return onlyDigits(value)
-    .slice(0, 11)
-    .replace(/^(\d{3})(\d)/, '$1.$2')
-    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1-$2')
-}
-
-// Máscara de telefone enquanto digita: (81) 99999-9999
-function formatPhone(value: string): string {
-  const d = onlyDigits(value).slice(0, 11)
-  if (d.length <= 2) return d
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
-}
-
-// Verificação simples de e-mail: algo@algo.algo
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-/* ============================================================
-   ÍCONES (SVG simples)
-   ============================================================ */
-
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4" y="10" width="16" height="11" rx="2" />
-      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-    </svg>
-  )
-}
-
-function EyeIcon({ hidden }: { hidden: boolean }) {
-  return hidden ? (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 3 21 21M10.6 10.6a2 2 0 0 0 2.8 2.8" />
-      <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5.5 0 9 7 9 7a14.8 14.8 0 0 1-3.1 3.8M6.2 6.2C4.1 7.5 3 12 3 12s3.5 7 9 7a9.7 9.7 0 0 0 3-.5" />
-    </svg>
-  ) : (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7Z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 12.5 10 17.5 19 7.5" />
-    </svg>
-  )
 }
 
 /* ============================================================
@@ -205,7 +115,7 @@ function TextField({
   )
 
   return (
-    <label className={`agent-login__field ${className}`}>
+    <label className={`agent-register__field ${className}`}>
       <span>
         {label}
         {required && ' *'}
@@ -214,7 +124,7 @@ function TextField({
 
       {/* Se tiver "trailing", o campo ganha um espaço à direita para o botão */}
       {trailing ? (
-        <span className="agent-login__password">
+        <span className="agent-register__password">
           {input}
           {trailing}
         </span>
@@ -243,7 +153,8 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
   const [consent, setConsent] = useState(false) // checkbox de privacidade
   const [showPasswords, setShowPasswords] = useState(false) // mostrar/ocultar senhas
   const [formMessage, setFormMessage] = useState('') // aviso geral acima do botão
-  const [submitted, setSubmitted] = useState(false) // true depois de enviar
+  const [submitted, setSubmitted] = useState(false) // true depois de enviar com sucesso
+  const [isSubmitting, setIsSubmitting] = useState(false) // loading durante envio
   const [deviceId] = useState(getDeviceId) // ID do aparelho
 
   // Atualiza UM campo e limpa o erro dele (o resto continua igual)
@@ -304,8 +215,20 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
     return newErrors
   }
 
+  // Handler para formatação de CPF preservando posição do cursor
+  const handleCpfChange = useCallback((rawValue: string) => {
+    const formatted = formatCpf(rawValue)
+    updateField('cpf', formatted)
+  }, [])
+
+  // Handler para formatação de telefone preservando posição do cursor
+  const handlePhoneChange = useCallback((rawValue: string) => {
+    const formatted = formatPhone(rawValue)
+    updateField('phone', formatted)
+  }, [])
+
   // Roda quando o usuário clica em "Solicitar cadastro"
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault() // impede a página de recarregar
     setFormMessage('')
 
@@ -331,11 +254,18 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
       deviceInfo: navigator.userAgent,
     }
 
-    // Com a API pronta, aqui você esperaria a resposta e trataria erros.
-    // A senha deve ser guardada com hash no servidor, nunca em texto puro.
-    onRegister?.(data)
-    setSubmitted(true)
-    window.scrollTo({ top: 0 })
+    setIsSubmitting(true)
+    try {
+      await onRegister?.(data)
+      setSubmitted(true)
+      // Scroll to top after state update
+      setTimeout(() => window.scrollTo({ top: 0 }), 0)
+    } catch (error) {
+      console.error('Erro ao enviar cadastro:', error)
+      setFormMessage('Não foi possível enviar a solicitação. Tente novamente mais tarde.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -365,7 +295,7 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
 
           {submitted ? (
             /* ---------- Tela de sucesso (depois de enviar) ---------- */
-            <div className="agent-login__card agent-register__success">
+            <div className="agent-register__success">
               <span className="agent-register__success-icon">
                 <CheckIcon />
               </span>
@@ -374,16 +304,16 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
                 A coordenação da Defesa Civil vai analisar seus dados e o seu dispositivo.
                 Você só poderá entrar depois da habilitação.
               </p>
-              <p className="agent-login__device">
+              <p className="agent-register__device">
                 Código do dispositivo: <strong>{deviceId.slice(-8).toUpperCase()}</strong>
               </p>
-              <button className="agent-login__submit" type="button" onClick={onBackToLogin}>
+              <button className="agent-register__submit" type="button" onClick={onBackToLogin}>
                 Voltar para o login
               </button>
             </div>
           ) : (
             /* ---------- Formulário ---------- */
-            <form className="agent-login__card" onSubmit={handleSubmit} noValidate>
+            <form className="agent-register__card" onSubmit={handleSubmit} noValidate>
               {/* Seção 1: identificação */}
               <section className="agent-register__section">
                 <h3>Identificação institucional</h3>
@@ -403,7 +333,7 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
                     label="Matrícula funcional (RM)"
                     name="registration"
                     required
-                    autoComplete="off"
+                    autoComplete="username"
                     placeholder="Informe sua matrícula"
                     value={values.registration}
                     onChange={(value) => updateField('registration', value)}
@@ -417,7 +347,7 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
                     autoComplete="off"
                     placeholder="000.000.000-00"
                     value={values.cpf}
-                    onChange={(value) => updateField('cpf', formatCpf(value))}
+                    onChange={handleCpfChange}
                     error={errors.cpf}
                   />
                   <TextField
@@ -458,7 +388,7 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
                     autoComplete="tel"
                     placeholder="(81) 90000-0000"
                     value={values.phone}
-                    onChange={(value) => updateField('phone', formatPhone(value))}
+                    onChange={handlePhoneChange}
                     error={errors.phone}
                   />
                 </div>
@@ -482,7 +412,7 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
                     trailing={
                       // Botão do olho: mostra ou oculta as DUAS senhas
                       <button
-                        className="agent-login__eye"
+                        className="agent-register__eye"
                         type="button"
                         onClick={() => setShowPasswords((current) => !current)}
                         aria-label={showPasswords ? 'Ocultar senhas' : 'Mostrar senhas'}
@@ -507,9 +437,9 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
 
               {/* Seção 4: aviso sobre a habilitação */}
               <section className="agent-register__section">
-                <div className="agent-login__notice" role="note">
-                  <div className="agent-login__notice-title">
-                    <span className="agent-login__notice-icon">
+                <div className="agent-register__notice" role="note">
+                  <div className="agent-register__notice-title">
+                    <span className="agent-register__notice-icon">
                       <LockIcon />
                     </span>
                     <strong>Habilitação pela coordenação</strong>
@@ -587,20 +517,20 @@ export default function Register({ onRegister, onBackToLogin }: RegisterProps) {
 
               {/* Aviso geral (aparece só quando há erro) */}
               {formMessage && (
-                <p className="agent-login__message" role="alert">
+                <p className="agent-register__message" role="status">
                   {formMessage}
                 </p>
               )}
 
-              <button className="agent-login__submit" type="submit">
-                Solicitar cadastro
+              <button className="agent-register__submit" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Enviando...' : 'Solicitar cadastro'}
               </button>
 
-              <p className="agent-login__device">
+              <p className="agent-register__device">
                 Dispositivo: <strong>{deviceId.slice(-8).toUpperCase()}</strong>
               </p>
 
-              <p className="agent-login__register">
+              <p className="agent-register__register">
                 Já possui conta? <button type="button" onClick={onBackToLogin}>Acessar login</button>
               </p>
             </form>
