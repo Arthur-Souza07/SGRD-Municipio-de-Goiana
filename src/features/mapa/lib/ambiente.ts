@@ -76,10 +76,15 @@ export function normalizarEstacoes(
     const horaValida =
       typeof hora === 'string' &&
       /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(hora);
-    const instante =
-      dataValida && horaValida
-        ? `${data.slice(6)}-${data.slice(3, 5)}-${data.slice(0, 2)}T${hora.length === 5 ? hora + ':00' : hora}-03:00`
-        : null;
+    let instante: string | null = null;
+    if (dataValida && horaValida) {
+      const [dia, mes, ano] = data.split('/').map(Number);
+      const [horas, minutos] = hora.split(':').map(Number);
+      // API returns Brazil local time (UTC-3). Construct as UTC then add 3h offset.
+      // new Date(Date.UTC(ano, mes-1, dia, horas+3, minutos)) gives correct UTC instant.
+      const date = new Date(Date.UTC(ano, mes - 1, dia, horas + 3, minutos, 0));
+      instante = date.toISOString();
+    }
     resultado.push({
       id: `${tipo}-${String(p[tipo === 'chuva' ? 'objectid' : 'id'] ?? resultado.length)}`,
       tipo,

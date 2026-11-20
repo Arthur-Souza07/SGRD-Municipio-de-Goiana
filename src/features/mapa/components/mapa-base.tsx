@@ -366,6 +366,9 @@ function MapaBase({
       aoAtualizar({ fase: 'pronto', processados: 0, total: 0, duracaoMs: 0 });
     }
     return () => {
+      // Only cleanup if this effect's generation is still current
+      // Prevents stale effect from removing markers added by newer effect
+      if (lote !== geracao.current) return;
       cancelado = true;
       grupos.remove();
       gruposRef.current = null;
@@ -382,6 +385,8 @@ function MapaBase({
       focoAplicado.current === foco.revisao
     )
       return;
+    // Capture the current generation at effect start to validate marker freshness
+    const geracaoCapturada = geracao.current;
     const marcador = marcadoresRef.current.get(foco.ponto.id);
     const grupos = gruposRef.current;
     if (!marcador || !grupos) return;
@@ -390,6 +395,8 @@ function MapaBase({
       if (
         cancelado ||
         grupos !== gruposRef.current ||
+        // Verify marker still belongs to the generation this effect captured
+        geracaoCapturada !== geracao.current ||
         marcadoresRef.current.get(foco.ponto.id) !== marcador
       )
         return;

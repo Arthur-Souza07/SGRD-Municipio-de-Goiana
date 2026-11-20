@@ -146,8 +146,8 @@ export function validarCadastro(campos: CamposCadastro): ErrosCadastro {
       erros.familiares =
         'Um mesmo CPF não pode identificar duas pessoas da família.';
     if (familiares.length + 1 > Number(campos.moradores))
-      erros.moradores =
-        'A quantidade de moradores deve incluir o representante e todos os familiares identificados.';
+      erros.familiares =
+        'Há mais familiares identificados do que o número de moradores informado. Ajuste a lista de familiares ou o total de moradores.';
   }
   if (!['baixo', 'medio', 'alto', 'nao_informado'].includes(campos.nivelRisco))
     erros.nivelRisco = 'Selecione uma classificação válida.';
@@ -163,7 +163,7 @@ export function validarCadastro(campos: CamposCadastro): ErrosCadastro {
   )
     erros.localizacao =
       'Marque a residência no mapa, use o GPS ou confirme as coordenadas antes de cadastrar.';
-  else if (!dentroDeGoiana(local.latitude, local.longitude))
+  else if (!dentroDeGoiana(local.longitude, local.latitude))
     erros.localizacao =
       'O ponto está fora do limite municipal de Goiana–PE (IBGE 2025). Confira o GPS ou ajuste a marcação da residência.';
   return erros;
@@ -328,7 +328,7 @@ export async function carregarDetalhe(
   endereco: string,
   id: string,
   signal?: AbortSignal,
-): Promise<DadosFamilia | null> {
+): Promise<DadosFamilia> {
   const resposta = await fetch(
     `${endereco.replace(/\/$/, '')}/${encodeURIComponent(id)}`,
     {
@@ -352,7 +352,7 @@ export async function carregarDetalhe(
     !registro.dados ||
     typeof registro.dados !== 'object'
   )
-    return null;
+    throw new Error('Resposta do servidor inválida: estrutura de dados inesperada.');
   const dado = registro.dados as Record<string, unknown>;
   // Não se espalha conteúdo arbitrário da resposta na interface.
   const campos: CamposCadastro = { ...FORMULARIO_VAZIO };
@@ -401,6 +401,8 @@ export async function carregarDetalhe(
         ? (local.origem as LocalizacaoFamilia['origem'])
         : 'coordenadas',
     };
-  if (Object.keys(validarCadastro(campos)).length) return null;
+  const erros = validarCadastro(campos);
+  if (Object.keys(erros).length)
+    throw new Error('Dados do cadastro inválidos: ' + Object.values(erros).join('; '));
   return prepararCadastro(campos);
 }

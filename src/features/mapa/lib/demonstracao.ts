@@ -76,7 +76,7 @@ export function normalizarDemonstracao(entrada: unknown): {
     if (resumo) resumos.set(dado.id, resumo);
   }
   const pontos = base.pontos.filter((p) =>
-    dentroDeGoiana(p.latitude, p.longitude),
+    dentroDeGoiana(p.longitude, p.latitude),
   );
   return {
     descartados: base.descartados + base.pontos.length - pontos.length,

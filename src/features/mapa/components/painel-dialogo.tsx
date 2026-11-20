@@ -30,22 +30,30 @@ export default function PainelDialogo({
   const ref = useRef<HTMLDialogElement>(null);
   const acionador = useRef<HTMLElement | null>(null);
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fechando = useRef(false); // Prevents double-close race (Finding 8)
   const [visivel, setVisivel] = useState(false);
   const fechar = useCallback(() => {
-    if (ocupado || temporizador.current) return;
+    if (ocupado || temporizador.current || fechando.current) return;
+    fechando.current = true;
     setVisivel(false);
     temporizador.current = setTimeout(
       () => {
         temporizador.current = null;
-        ref.current?.close();
-        aoFechar();
-        acionador.current?.focus();
+        // Only proceed if still closing (not reopened) - check dialog is still open in DOM
+        // This prevents race where cleanup runs, clears timer, but callback was already queued
+        if (fechando.current && ref.current?.open) {
+          ref.current?.close();
+          aoFechar();
+          acionador.current?.focus();
+        }
       },
       window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260,
     );
   }, [aoFechar, ocupado]);
   useEffect(() => {
     if (!aberto) return;
+    // Reset closing flag when dialog opens
+    fechando.current = false;
     acionador.current =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
@@ -68,6 +76,8 @@ export default function PainelDialogo({
       document.body.style.overflow = anterior;
       ref.current?.close();
       setVisivel(false);
+      // Mark as closed to prevent timer callback from running
+      fechando.current = true;
     };
   }, [aberto]);
 

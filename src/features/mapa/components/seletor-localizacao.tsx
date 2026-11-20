@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import { adicionarLimiteGoiana } from '@/features/mapa/lib/territorio';
 import { CENTRO_GOIANA } from '@/features/mapa/lib/pontos';
@@ -15,36 +15,16 @@ export default function SeletorLocalizacao({
   const mapa = useRef<Leaflet.Map | null>(null);
   const marcador = useRef<Leaflet.Marker | null>(null);
   const selecionar = useRef(aoSelecionar);
-  const local = useRef(localizacao);
   const [estado, setEstado] = useState<'carregando' | 'pronto' | 'erro'>(
     'carregando',
   );
   const [tentativa, setTentativa] = useState(0);
+  // Ready state to track when map and marker are fully initialized
+  const [mapaPronta, setMapaPronta] = useState(false);
   selecionar.current = aoSelecionar;
-  local.current = localizacao;
-
-  const atualizarMarcador = useCallback(() => {
-    const pin = marcador.current,
-      instancia = mapa.current,
-      posicao = local.current;
-    if (!pin || !instancia) return;
-    if (!posicao) {
-      pin.setOpacity(0);
-      pin.dragging?.disable();
-      return;
-    }
-    pin.setLatLng([posicao.latitude, posicao.longitude]).setOpacity(1);
-    pin.dragging?.enable();
-    if (
-      !instancia.getBounds().contains([posicao.latitude, posicao.longitude])
-    ) {
-      instancia.setView([posicao.latitude, posicao.longitude], 16, {
-        animate: false,
-      });
-    }
-  }, []);
 
   useEffect(() => {
+    const localizacaoInicial = localizacao;
     let cancelado = false;
     let instancia: Leaflet.Map | undefined;
     let observador: ResizeObserver | undefined;
@@ -53,8 +33,8 @@ export default function SeletorLocalizacao({
       .then(({ default: L }) => {
         if (cancelado || !elemento.current) return;
         instancia = L.map(elemento.current, {
-          center: local.current
-            ? [local.current.latitude, local.current.longitude]
+          center: localizacaoInicial
+            ? [localizacaoInicial.latitude, localizacaoInicial.longitude]
             : CENTRO_GOIANA,
           zoom: 16,
           minZoom: 3,
@@ -106,7 +86,34 @@ export default function SeletorLocalizacao({
           const posicao = marcador.current!.getLatLng();
           escolher(posicao.lat, posicao.lng);
         });
-        atualizarMarcador();
+        // Inline marker update logic here to avoid stale closure
+        const pinRef = marcador.current;
+        const mapaRef = mapa.current;
+        if (pinRef && mapaRef && localizacaoInicial) {
+          pinRef
+            .setLatLng([
+              localizacaoInicial.latitude,
+              localizacaoInicial.longitude,
+            ])
+            .setOpacity(1);
+          pinRef.dragging?.enable();
+          if (
+            !mapaRef
+              .getBounds()
+              .contains([
+                localizacaoInicial.latitude,
+                localizacaoInicial.longitude,
+              ])
+          ) {
+            mapaRef.setView(
+              [localizacaoInicial.latitude, localizacaoInicial.longitude],
+              16,
+              { animate: false },
+            );
+          }
+        }
+        // Signal that map and marker are ready
+        setMapaPronta(true);
         observador = new ResizeObserver(() => {
           if (
             !cancelado &&
@@ -130,10 +137,38 @@ export default function SeletorLocalizacao({
       instancia?.remove();
       mapa.current = null;
       marcador.current = null;
+      setMapaPronta(false);
     };
-  }, [tentativa, atualizarMarcador]);
+  }, [tentativa]);
 
-  useEffect(atualizarMarcador, [localizacao, atualizarMarcador]);
+  // Separate effect for updating marker when localizacao changes
+  // Depends on mapaPronta to ensure map is ready before updating marker
+  useEffect(() => {
+    if (!mapaPronta) return;
+    const pinRef = marcador.current;
+    const mapaRef = mapa.current;
+    if (!pinRef || !mapaRef) return;
+    if (!localizacao) {
+      pinRef.setOpacity(0);
+      pinRef.dragging?.disable();
+      return;
+    }
+    pinRef
+      .setLatLng([localizacao.latitude, localizacao.longitude])
+      .setOpacity(1);
+    pinRef.dragging?.enable();
+    if (
+      !mapaRef
+        .getBounds()
+        .contains([localizacao.latitude, localizacao.longitude])
+    ) {
+      mapaRef.setView(
+        [localizacao.latitude, localizacao.longitude],
+        16,
+        { animate: false },
+      );
+    }
+  }, [localizacao, mapaPronta]);
 
   return (
     <div className="seletor-localizacao">

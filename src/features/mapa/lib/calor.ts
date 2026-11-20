@@ -42,7 +42,8 @@ export function opcoesCalorNoZoom(zoom: number) {
 export function prepararPontosCalor(
   pontos: readonly PontoRisco[],
 ): PontoCalor[] {
-  return pontos
+  // Defensive copy to avoid mutating the input array
+  return [...pontos]
     .filter((p) => coordenadasValidas(p.latitude, p.longitude))
     .map((p) => [p.latitude, p.longitude, 1]);
 }

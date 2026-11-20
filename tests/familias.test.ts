@@ -177,5 +177,5 @@ test('detalhes são consultados individualmente e conteúdo malformado não é r
   fake.mock.mockImplementation(async () =>
     Response.json({ dados: { cpf: 'inválido' } }),
   );
-  assert.equal(await carregarDetalhe('/familias', '1'), null);
+  await assert.rejects(carregarDetalhe('/familias', '1'), /Dados do cadastro inválidos/);
 });

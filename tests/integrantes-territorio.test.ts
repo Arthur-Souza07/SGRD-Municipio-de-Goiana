@@ -32,28 +32,28 @@ test('idade usa aniversário civil, aceita bebê com zero anos e rejeita datas i
 });
 
 test('limite reconhece sede e distritos de Goiana e rejeita cidades vizinhas e mar aberto', () => {
-  assert.equal(dentroDeGoiana(-7.5606, -35.0025), true);
+  assert.equal(dentroDeGoiana(-35.0025, -7.5606), true);
   assert.equal(
-    dentroDeGoiana(-7.625, -34.813),
+    dentroDeGoiana(-34.813, -7.625),
     true,
     'Cocota, distrito de Ponta de Pedras',
   );
-  for (const [lat, lng] of [
-    [-7.7764, -34.8927],
-    [-7.747, -34.825],
-    [-8.05, -34.9],
-    [-7.56, -34.7],
-    [NaN, -35],
-    [-35, -7.56],
+  for (const [lng, lat] of [
+    [-34.8927, -7.7764],
+    [-34.825, -7.747],
+    [-34.9, -8.05],
+    [-34.7, -7.56],
+    [-35, NaN],
+    [-7.56, -35],
   ])
-    assert.equal(dentroDeGoiana(lat, lng), false);
+    assert.equal(dentroDeGoiana(lng, lat), false);
   const geometria = LIMITE_GOIANA.geometry;
   const primeira =
     geometria.type === 'Polygon'
       ? geometria.coordinates[0][0]
       : geometria.coordinates[0][0][0];
   assert.equal(
-    dentroDeGoiana(primeira[1], primeira[0]),
+    dentroDeGoiana(primeira[0], primeira[1]),
     true,
     'borda municipal inclusiva',
   );
@@ -76,7 +76,7 @@ test('cadastro valida composição, CPFs opcionais, duplicidades e quantidade de
   const pessoas = exemplo.familiares!;
   assert.equal(prepararCadastro(exemplo).familiares!.length, 3);
   assert.equal(prepararCadastro(exemplo).familiares![0].cpf, '');
-  assert.ok(validarCadastro({ ...exemplo, moradores: '2' }).moradores);
+  assert.ok(validarCadastro({ ...exemplo, moradores: '2' }).familiares);
   assert.ok(
     validarCadastro({ ...exemplo, nascimentoRepresentante: '2050-01-01' })
       .nascimentoRepresentante,

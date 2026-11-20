@@ -147,8 +147,12 @@ export default function CamadasAmbientaisMapa({
   useEffect(() => {
     setErro('');
     setCarregando(false);
-    atualizarAreas.current([]);
-    if (camada === 'nenhuma') return;
+    // Don't clear areas synchronously (prevents UI flash during layer switch)
+    // Areas will be updated in the success path below, or cleared for 'nenhuma'/'geologia'/'historico'
+    if (camada === 'nenhuma') {
+      atualizarAreas.current([]);
+      return;
+    }
     let cancelado = false;
     let geo: Leaflet.GeoJSON | undefined;
     const controle = new AbortController();

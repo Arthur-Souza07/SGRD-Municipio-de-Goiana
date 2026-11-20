@@ -62,13 +62,14 @@ export default function FormularioFamilia({
   const formulario = useRef<HTMLFormElement>(null);
   useEffect(
     () => () => {
-      gpsTentativa.current++;
+      // Cleanup: do NOT increment gpsTentativa here.
+      // Only increment when STARTING a new GPS request (in capturarGps).
     },
     [],
   );
   useEffect(() => {
     if (!aberto) {
-      gpsTentativa.current++;
+      // Dialog closed: just stop GPS indicator, don't cancel in-flight request
       setGps(false);
     }
   }, [aberto]);
@@ -94,7 +95,7 @@ export default function FormularioFamilia({
     setLongitude(String(local.longitude));
     setErros((anterior) => ({
       ...anterior,
-      localizacao: dentroDeGoiana(local.latitude, local.longitude)
+      localizacao: dentroDeGoiana(local.longitude, local.latitude)
         ? undefined
         : 'O ponto está fora de Goiana–PE. Confira a localização da residência.',
     }));
@@ -103,8 +104,13 @@ export default function FormularioFamilia({
   }, []);
   function atualizarFamiliares(pessoas: Familiar[]) {
     alterar('familiares', pessoas);
-    if (pessoas.length + 1 > Number(campos.moradores))
-      alterar('moradores', String(pessoas.length + 1));
+    setCampos((anterior) => {
+      const moradoresAtuais = Number(anterior.moradores);
+      if (pessoas.length + 1 > moradoresAtuais) {
+        return { ...anterior, moradores: String(pessoas.length + 1) };
+      }
+      return anterior;
+    });
   }
   function capturarGps() {
     setModo('gps');
@@ -151,7 +157,7 @@ export default function FormularioFamilia({
     );
   }
   function trocarModo(proximo: typeof modo) {
-    gpsTentativa.current++;
+    // Mode switch: just stop GPS indicator, don't cancel in-flight request
     setGps(false);
     setModo(proximo);
     setErroGps('');
@@ -267,7 +273,7 @@ export default function FormularioFamilia({
                 type="button"
                 disabled={enviando}
                 onClick={() => {
-                  gpsTentativa.current++;
+                  // Example data load: just stop GPS indicator, don't cancel in-flight request
                   setGps(false);
                   const exemplo = exemploCadastro();
                   setCampos(exemplo);
@@ -549,7 +555,7 @@ export default function FormularioFamilia({
                       setErros((a) => ({
                         ...a,
                         localizacao:
-                          'Confira a latitude (-90 a 90) e a longitude (-180 a 180).',
+                          'Informe coordenadas válidas: latitude entre -90 e 90, longitude entre -180 e 180.',
                       }));
                       return;
                     }
@@ -566,14 +572,14 @@ export default function FormularioFamilia({
             )}
             {campos.localizacao && (
               <output
-                className={`localizacao-confirmada${dentroDeGoiana(campos.localizacao.latitude, campos.localizacao.longitude) ? '' : ' fora-municipio'}`}
+                className={`localizacao-confirmada${dentroDeGoiana(campos.localizacao.longitude, campos.localizacao.latitude) ? '' : ' fora-municipio'}`}
                 aria-live="polite"
               >
                 <Check size={16} />
                 <span>
                   {dentroDeGoiana(
-                    campos.localizacao.latitude,
                     campos.localizacao.longitude,
+                    campos.localizacao.latitude,
                   )
                     ? 'Residência marcada em Goiana–PE'
                     : 'Ponto fora de Goiana–PE'}{' '}
@@ -596,7 +602,7 @@ export default function FormularioFamilia({
                 type="button"
                 className="limpar-localizacao"
                 onClick={() => {
-                  gpsTentativa.current++;
+                  // Clear location: just stop GPS indicator, don't cancel in-flight request
                   setGps(false);
                   alterar('localizacao', null);
                   setLatitude('');

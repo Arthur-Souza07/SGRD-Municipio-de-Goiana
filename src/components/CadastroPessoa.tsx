@@ -104,7 +104,7 @@ export default function CadastroPessoa({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        if (!dentroDeGoiana(latitude, longitude)) {
+        if (!dentroDeGoiana(longitude, latitude)) {
           setGpsMensagem(
             'A localização está fora de Goiana–PE. Confira a residência antes de cadastrar.',
           );

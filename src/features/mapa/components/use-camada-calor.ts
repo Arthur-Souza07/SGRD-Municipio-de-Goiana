@@ -39,28 +39,18 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
     [mapa],
   );
 
-  // Atualiza somente a camada existente quando a API retorna um novo conjunto.
-  useEffect(() => {
-    dadosRef.current = dados;
-    const camada = camadaRef.current;
-    if (
-      ativo &&
-      camada &&
-      mapa?.hasLayer(camada) &&
-      aplicadosRef.current !== dados
-    ) {
-      camada.setLatLngs(dados);
-      aplicadosRef.current = dados;
-      setFase(dados.length ? 'ativo' : 'vazio');
-    }
-  }, [dados, mapa, ativo]);
-
+  // Efeito único: gerencia criação, atualização de dados e anexação/remoção da camada.
   useEffect(() => {
     let cancelado = false;
     let quadro: number | undefined;
     let segundoQuadro: number | undefined;
     let remocao: ReturnType<typeof setTimeout> | undefined;
+
     const canvas = () => camadaRef.current?.getElement();
+
+    // Atualiza a referência dos dados imediatamente para evitar race conditions
+    dadosRef.current = dados;
+
     if (!ativo || !mapa) {
       setFase('desligado');
       const camada = camadaRef.current;
@@ -76,28 +66,36 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
         if (remocao) clearTimeout(remocao);
       };
     }
+
     const mapaAtual = mapa;
     setFase('carregando');
+
     async function mostrar() {
       const L = (await import('leaflet')).default;
       const { criarCamadaCalor } =
         await import('@/features/mapa/lib/camada-calor');
       if (cancelado) return;
-      // A mesma camada e o mesmo canvas são reaproveitados nas alternâncias.
+
+      // Cria a camada se não existir, usando os dados atuais
       if (!camadaRef.current) {
-        camadaRef.current = criarCamadaCalor(L, dadosRef.current, () =>
+        camadaRef.current = criarCamadaCalor(L, dados, () =>
           erroRef.current(),
         );
-        aplicadosRef.current = dadosRef.current;
+        aplicadosRef.current = dados;
       }
+
       const camada = camadaRef.current;
+
       // Reanexa a mesma instância antes de redesenhar os dados atualizados.
       const estavaVisivel = mapaAtual.hasLayer(camada);
       if (!estavaVisivel) camada.addTo(mapaAtual);
-      if (aplicadosRef.current !== dadosRef.current) {
-        camada.setLatLngs(dadosRef.current);
-        aplicadosRef.current = dadosRef.current;
+
+      // Atualiza os dados da camada se mudaram
+      if (aplicadosRef.current !== dados) {
+        camada.setLatLngs(dados);
+        aplicadosRef.current = dados;
       }
+
       // A descrição textual fica na legenda; os marcadores continuam acessíveis.
       const elemento = canvas();
       if (elemento) {
@@ -109,20 +107,22 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
           });
         });
       }
-      setFase(dadosRef.current.length ? 'ativo' : 'vazio');
+      setFase(dados.length ? 'ativo' : 'vazio');
     }
+
     mostrar().catch(() => {
       if (!cancelado) {
         camadaRef.current?.remove();
         setFase('erro');
       }
     });
+
     return () => {
       cancelado = true;
       if (quadro !== undefined) cancelAnimationFrame(quadro);
       if (segundoQuadro !== undefined) cancelAnimationFrame(segundoQuadro);
     };
-  }, [ativo, mapa, tentativa]);
+  }, [ativo, mapa, dados, tentativa]);
 
   const estado = useMemo<EstadoCalor>(
     () => ({ fase, quantidade: dados.length }),

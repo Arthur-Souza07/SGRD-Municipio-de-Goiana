@@ -1,0 +1,118 @@
+/* Manager Auth Page Styles - Desktop First */
+/* Inherits most from AgentAuthPage.css with desktop-specific adjustments */
+
+@import './AgentAuthPage.css';
+
+/* Desktop-specific overrides */
+.manager-auth-page .auth-header {
+  padding: 2.5rem 2rem 1.5rem;
+}
+
+.manager-auth-page .brand-icon {
+  /* Same */
+}
+
+.manager-auth-page .auth-main {
+  padding: 2rem;
+  min-height: calc(100vh - 200px);
+}
+
+.manager-auth-page .auth-card {
+  max-width: 480px;
+  padding: 2.5rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.manager-auth-page .form-title {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.manager-auth-page .form-subtitle {
+  font-size: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Two column grid active by default on desktop */
+.manager-auth-page .two-column-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Input fields slightly larger on desktop */
+.manager-auth-page .field-input,
+.manager-auth-page .field-select {
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  min-height: 52px;
+}
+
+/* Button adjustments */
+.manager-auth-page .btn {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  min-height: 52px;
+}
+
+.manager-auth-page .btn-sm {
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  min-height: 44px;
+}
+
+/* GPS section not shown for manager (no GPS capture) */
+/* .manager-auth-page .gps-section { display: none; } */
+
+/* Dev skip button adjustments */
+.manager-auth-page .dev-skip-container {
+  margin-top: 1.5rem;
+}
+
+.manager-auth-page .dev-skip-buttons {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.manager-auth-page .dev-skip-button {
+  flex: 1;
+  min-width: 180px;
+}
+
+/* Footer */
+.manager-auth-page .auth-footer {
+  padding: 2rem;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 1023px) {
+  .manager-auth-page .auth-main {
+    padding: 1.5rem 1rem;
+  }
+
+  .manager-auth-page .auth-card {
+    padding: 1.5rem;
+  }
+
+  .manager-auth-page .two-column-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive - Mobile (fallback if viewed on mobile) */
+@media (max-width: 767px) {
+  .manager-auth-page .auth-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .manager-auth-page .auth-card {
+    padding: 1.5rem;
+  }
+
+  .manager-auth-page .dev-skip-buttons {
+    flex-direction: column;
+  }
+
+  .manager-auth-page .dev-skip-button {
+    width: 100%;
+  }
+}

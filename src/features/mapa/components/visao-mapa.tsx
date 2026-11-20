@@ -22,7 +22,7 @@ import {
   ChevronRight,
   FlaskConical,
   Info,
-  Map,
+  Map as MapIcon,
   MapPin,
   Plus,
   Search,
@@ -113,7 +113,7 @@ export default function VisaoMapa() {
   );
   const buscaAdiada = useDeferredValue(busca);
   const pontos = useMemo(() => {
-    const unicos = new globalThis.Map<string, CadastroFamilia>(
+    const unicos = new Map<string, CadastroFamilia>(
       pontosOrigem.map((p) => [p.id, p]),
     );
     cadastrosSessao.forEach((p) => unicos.set(p.id, p));
@@ -248,7 +248,7 @@ export default function VisaoMapa() {
           <nav className="navegacao" aria-label="Monitoramento social">
             <span className="titulo-navegacao">MONITORAMENTO SOCIAL</span>
             <a href="#mapa-familias" aria-current="page">
-              <Map size={20} />
+              <MapIcon size={20} />
               <span>Mapa social</span>
               <ChevronRight size={15} />
             </a>

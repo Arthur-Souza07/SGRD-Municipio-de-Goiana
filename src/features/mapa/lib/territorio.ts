@@ -30,8 +30,8 @@ function situacaoNoAnel(
   return dentro ? 'dentro' : 'fora';
 }
 /** Limite IBGE 2025, código 2606200. SIRGAS 2000 em coordenadas geográficas. */
-export function dentroDeGoiana(latitude: number, longitude: number): boolean {
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
+export function dentroDeGoiana(longitude: number, latitude: number): boolean {
+  if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return false;
   const geometria = LIMITE_GOIANA.geometry;
   const poligonos =
     geometria.type === 'Polygon'
