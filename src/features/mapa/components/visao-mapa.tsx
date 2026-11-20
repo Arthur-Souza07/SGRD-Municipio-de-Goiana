@@ -40,6 +40,7 @@ import DetalhesFamilia from './detalhes-familia';
 import ListaFamilias from './lista-familias';
 import PainelAmbiental from './painel-ambiental';
 import { useDadosAmbientais } from './use-dados-ambientais';
+import { useExportarExcel } from './use-exportar-excel';
 import type {
   AreaPlanejada,
   CamadaTerritorial,
@@ -91,6 +92,8 @@ export default function VisaoMapa() {
     null,
   );
   const [areasDisponiveis, setAreasDisponiveis] = useState<AreaPlanejada[]>([]);
+  const [bairroSelecionado, setBairroSelecionado] = useState<string>('Todos');
+  const { exportar, bairrosDisponiveis } = useExportarExcel();
   const chuva = useDadosAmbientais('chuva', chuvaAtiva, revisaoAmbiente);
   const rio = useDadosAmbientais('rio', rioAtivo, revisaoAmbiente);
   const estacoes = useMemo(
@@ -121,8 +124,14 @@ export default function VisaoMapa() {
   }, [pontosOrigem, cadastrosSessao]);
   const totais = useMemo(() => contarNiveis(pontos), [pontos]);
   const visiveis = useMemo(
-    () => filtrarFamilias(pontos, buscaAdiada, nivel),
-    [pontos, buscaAdiada, nivel],
+    () => {
+      let resultado = filtrarFamilias(pontos, buscaAdiada, nivel);
+      if (bairroSelecionado !== 'Todos') {
+        resultado = resultado.filter((f) => f.dados?.bairro === bairroSelecionado);
+      }
+      return resultado;
+    },
+    [pontos, buscaAdiada, nivel, bairroSelecionado],
   );
   const selecionarFamilia = useCallback(
     (ponto: PontoRisco) =>
@@ -438,17 +447,43 @@ export default function VisaoMapa() {
                   <option value="nao_informado">Sem classificação</option>
                 </select>
               </label>
-              {(busca || nivel) && (
+              <label className="filtro-bairro">
+                <span>Bairro</span>
+                <select
+                  value={bairroSelecionado}
+                  onChange={(e) => setBairroSelecionado(e.target.value)}
+                >
+                  <option value="Todos">Todos os bairros</option>
+                  {bairrosDisponiveis.map((bairro) => (
+                    <option key={bairro} value={bairro}>
+                      {bairro}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {(busca || nivel || bairroSelecionado !== 'Todos') && (
                 <button
                   type="button"
                   onClick={() => {
                     setBusca('');
                     setNivel('');
+                    setBairroSelecionado('Todos');
                   }}
                 >
                   Limpar filtros
                 </button>
               )}
+              <div className="acoes-filtros">
+                <button
+                  type="button"
+                  className="botao-exportar"
+                  onClick={() => exportar(visiveis, bairroSelecionado)}
+                  disabled={!visiveis.length}
+                  aria-label="Exportar famílias filtradas para Excel"
+                >
+                  📊 Exportar Excel
+                </button>
+              </div>
               <output aria-live="polite">
                 {visiveis.length} de {pontos.length} famílias
               </output>

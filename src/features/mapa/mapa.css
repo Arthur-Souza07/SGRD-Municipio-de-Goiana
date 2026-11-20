@@ -1374,6 +1374,44 @@
   background: #fff;
   font-size: 12px;
 }
+:where(.modulo-mapa) .filtro-bairro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+:where(.modulo-mapa) .filtro-bairro > span {
+  font-size: 10px;
+  color: var(--secundario);
+}
+:where(.modulo-mapa) .filtro-bairro select {
+  min-height: 44px;
+  min-width: 180px;
+  padding: 9px 11px;
+  border: 1px solid #cad6e4;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 12px;
+}
+:where(.modulo-mapa) .acoes-filtros {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+:where(.modulo-mapa) .botao-exportar {
+  background: #10b981;
+  color: #fff;
+  border-color: #10b981;
+  font-weight: 600;
+}
+:where(.modulo-mapa) .botao-exportar:hover:not(:disabled) {
+  background: #059669;
+  border-color: #059669;
+  color: #fff;
+}
+:where(.modulo-mapa) .botao-exportar:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
 :where(.modulo-mapa) .filtros-familias output {
   color: var(--secundario);
   font-size: 10px;
