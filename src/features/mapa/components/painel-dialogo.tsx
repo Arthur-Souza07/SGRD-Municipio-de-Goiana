@@ -1,0 +1,133 @@
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { X } from 'lucide-react';
+
+/** Dialog nativo: foco contido, fundo inerte e retorno de foco ao acionador. */
+export default function PainelDialogo({
+  aberto,
+  aoFechar,
+  titulo,
+  subtitulo,
+  ocupado = false,
+  children,
+  rodape,
+  id,
+}: {
+  aberto: boolean;
+  aoFechar: () => void;
+  titulo: string;
+  subtitulo?: string;
+  ocupado?: boolean;
+  children: ReactNode;
+  rodape?: ReactNode | ((fechar: () => void) => ReactNode);
+  id: string;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const acionador = useRef<HTMLElement | null>(null);
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fechando = useRef(false); // Prevents double-close race (Finding 8)
+  const [visivel, setVisivel] = useState(false);
+  const fechar = useCallback(() => {
+    if (ocupado || temporizador.current || fechando.current) return;
+    fechando.current = true;
+    setVisivel(false);
+    temporizador.current = setTimeout(
+      () => {
+        temporizador.current = null;
+        // Only proceed if still closing (not reopened) - check dialog is still open in DOM
+        // This prevents race where cleanup runs, clears timer, but callback was already queued
+        if (fechando.current && ref.current?.open) {
+          ref.current?.close();
+          aoFechar();
+          acionador.current?.focus();
+        }
+      },
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260,
+    );
+  }, [aoFechar, ocupado]);
+  useEffect(() => {
+    if (!aberto) return;
+    // Reset closing flag when dialog opens
+    fechando.current = false;
+    acionador.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    ref.current?.showModal();
+    let segundoFrame: number | undefined;
+    // Dois frames garantem o estado inicial antes da transição, inclusive no Safari.
+    const frame = requestAnimationFrame(() => {
+      segundoFrame = requestAnimationFrame(() => {
+        if (!temporizador.current) setVisivel(true);
+      });
+    });
+    const anterior = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      cancelAnimationFrame(frame);
+      if (segundoFrame !== undefined) cancelAnimationFrame(segundoFrame);
+      if (temporizador.current) clearTimeout(temporizador.current);
+      temporizador.current = null;
+      document.body.style.overflow = anterior;
+      ref.current?.close();
+      setVisivel(false);
+      // Mark as closed to prevent timer callback from running
+      fechando.current = true;
+    };
+  }, [aberto]);
+
+  return (
+    <dialog
+      ref={ref}
+      className="painel-dialogo"
+      data-visivel={visivel}
+      aria-labelledby={`${id}-titulo`}
+      aria-describedby={subtitulo ? `${id}-subtitulo` : undefined}
+      onCancel={(evento) => {
+        evento.preventDefault();
+        fechar();
+      }}
+      onClick={(evento) => {
+        if (evento.target !== evento.currentTarget) return;
+        const r = evento.currentTarget.getBoundingClientRect();
+        if (
+          evento.clientX < r.left ||
+          evento.clientX > r.right ||
+          evento.clientY < r.top ||
+          evento.clientY > r.bottom
+        )
+          fechar();
+      }}
+    >
+      <div className="estrutura-dialogo">
+        <header className="cabecalho-dialogo">
+          <div>
+            <span className="sobretitulo">DEFESA CIVIL · GOIANA</span>
+            <h2 id={`${id}-titulo`}>{titulo}</h2>
+            {subtitulo && <p id={`${id}-subtitulo`}>{subtitulo}</p>}
+          </div>
+          <button
+            className="botao-icone"
+            type="button"
+            onClick={fechar}
+            disabled={ocupado}
+            aria-label={`Fechar ${titulo.toLowerCase()}`}
+          >
+            <X size={21} />
+          </button>
+        </header>
+        <div className="corpo-dialogo">{children}</div>
+        {rodape && (
+          <footer className="rodape-dialogo">
+            {typeof rodape === 'function' ? rodape(fechar) : rodape}
+          </footer>
+        )}
+      </div>
+    </dialog>
+  );
+}

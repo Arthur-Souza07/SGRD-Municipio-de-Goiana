@@ -81,3 +81,64 @@ export function formatPhone(value: string): string {
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
+
+/* ============================================================
+   Mock handlers para desenvolvimento (REMOVER EM PRODUÇÃO)
+   ============================================================ */
+
+export interface LoginCredentials {
+  identifier: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+export interface RegisterData {
+  cpf: string;
+  nomeCompleto: string;
+  email: string;
+  telefone?: string;
+  senha: string;
+  confirmarSenha: string;
+  termos: boolean;
+  latitude?: number;
+  longitude?: number;
+  cargo?: string;
+  setor?: string;
+  matricula?: string;
+}
+
+/**
+ * Mock register handler - simulates API call
+ */
+export async function handleRegister(data: RegisterData): Promise<void> {
+  console.log('=== DADOS ENVIADOS PARA CADASTRO ===');
+  console.table(data);
+
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  // Simulate potential errors for testing
+  if (data.email.includes('erro')) {
+    throw new Error('Erro simulado no servidor');
+  }
+
+  alert(`Cadastro enviado!\n\n${JSON.stringify(data, null, 2)}`);
+}
+
+/**
+ * Mock login handler - simulates API call
+ */
+export async function handleLogin(creds: LoginCredentials): Promise<void> {
+  console.log('=== LOGIN ENVIADO ===');
+  console.table(creds);
+
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+
+  // Simulate invalid credentials for testing
+  if (creds.password === 'erro') {
+    throw new Error('Credenciais inválidas');
+  }
+
+  alert(`Login tentado:\nCPF/E-mail: ${creds.identifier}`);
+}

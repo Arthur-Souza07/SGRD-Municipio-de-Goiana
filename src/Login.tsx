@@ -19,7 +19,7 @@ export type LoginCredentials = {
 
 export type LoginProps = {
   // Conecte este callback à autenticação real quando a API estiver disponível.
-  onLogin?: (credentials: LoginCredentials) => void
+  onLogin?: (credentials: LoginCredentials) => Promise<void> | void
   onForgotPassword?: () => void
   onRequestAccess?: () => void
 }
