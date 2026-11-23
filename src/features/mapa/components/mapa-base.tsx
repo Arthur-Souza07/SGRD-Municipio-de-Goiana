@@ -1,13 +1,12 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import {
   CENTRO_GOIANA,
   ESTILOS_RISCO,
   maiorNivel,
-  nomeDaFamilia,
-  type NivelRisco,
-  type PontoRisco,
 } from '@/features/mapa/lib/pontos';
+import { nomeDaFamilia } from '@/features/mapa/lib/familias';
+import type { NivelRisco, PontoRisco } from '@/features/mapa/lib/familias';
 import { adicionarLimiteGoiana } from '@/features/mapa/lib/territorio';
 import { useCamadaCalor, type EstadoCalor } from './use-camada-calor';
 import CamadasAmbientaisMapa, {
@@ -36,36 +35,117 @@ interface Props {
 const permiteMovimento = () =>
   !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** Cache de ícones SVG reutilizáveis para evitar recriação de DOM */
+const iconeGrupoCache = new Map<number, SVGElement>();
+const iconeMarcadorCache = new Map<string, HTMLSpanElement>();
+
+/** Pool de etiquetas de quantidade reutilizáveis (máx. 10 por quantidade) */
+const etiquetaQuantidadePool = new Map<number, HTMLSpanElement[]>();
+
+/** Obtém uma etiqueta do pool ou cria uma nova */
+function obterEtiquetaQuantidade(total: number): HTMLSpanElement {
+  const pool = etiquetaQuantidadePool.get(total);
+  if (pool && pool.length > 0) {
+    return pool.pop()!;
+  }
+  return criarEtiquetaQuantidade(total);
+}
+
+/** Devolve uma etiqueta ao pool (para uso futuro quando marcadores forem removidos) */
+function devolverEtiquetaQuantidade(total: number, etiqueta: HTMLSpanElement): void {
+  let pool = etiquetaQuantidadePool.get(total);
+  if (!pool) {
+    pool = [];
+    etiquetaQuantidadePool.set(total, pool);
+  }
+  if (pool.length < 10) {
+    etiqueta.style.removeProperty('--cor-risco');
+    etiqueta.removeAttribute('aria-label');
+    etiqueta.removeAttribute('title');
+    pool.push(etiqueta);
+  }
+}
+// Suppress unused warning - function reserved for future marker removal optimization
+void devolverEtiquetaQuantidade;
+
+/** Obtém ou cria um ícone de grupo do cache */
+function obterIconeGrupo(total: number): SVGElement {
+  let icone = iconeGrupoCache.get(total);
+  if (!icone) {
+    icone = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icone.classList.add('icone-grupo');
+    icone.setAttribute('viewBox', '0 0 24 24');
+    icone.setAttribute('fill', 'none');
+    icone.setAttribute('stroke', 'currentColor');
+    icone.setAttribute('stroke-width', '2');
+    icone.setAttribute('stroke-linecap', 'round');
+    icone.setAttribute('stroke-linejoin', 'round');
+    icone.setAttribute('aria-hidden', 'true');
+    for (const desenho of [
+      'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2',
+      'M22 21v-2a4 4 0 0 0-3-3.87',
+      'M16 3.13a4 4 0 0 1 0 7.75',
+      'M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
+    ]) {
+      const caminho = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'path',
+      );
+      caminho.setAttribute('d', desenho);
+      icone.append(caminho);
+    }
+    iconeGrupoCache.set(total, icone);
+  }
+  return icone.cloneNode(true) as SVGElement;
+}
+
 /** Uma etiqueta visual compartilhada por grupos e famílias no modo de calor. */
 function criarEtiquetaQuantidade(total: number) {
   const etiqueta = document.createElement('span');
   etiqueta.className = 'etiqueta-quantidade';
-  const icone = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  icone.classList.add('icone-grupo');
-  icone.setAttribute('viewBox', '0 0 24 24');
-  icone.setAttribute('fill', 'none');
-  icone.setAttribute('stroke', 'currentColor');
-  icone.setAttribute('stroke-width', '2');
-  icone.setAttribute('stroke-linecap', 'round');
-  icone.setAttribute('stroke-linejoin', 'round');
-  icone.setAttribute('aria-hidden', 'true');
-  for (const desenho of [
-    'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2',
-    'M22 21v-2a4 4 0 0 0-3-3.87',
-    'M16 3.13a4 4 0 0 1 0 7.75',
-    'M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
-  ]) {
-    const caminho = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'path',
-    );
-    caminho.setAttribute('d', desenho);
-    icone.append(caminho);
-  }
+  etiqueta.append(obterIconeGrupo(total));
   const quantidade = document.createElement('b');
   quantidade.textContent = String(total);
-  etiqueta.append(icone, quantidade);
+  etiqueta.append(quantidade);
   return etiqueta;
+}
+
+/** Cria ou reutiliza o corpo do marcador (pin) */
+function criarCorpoMarcador(estiloCor: string, letra: string): HTMLSpanElement {
+  const chave = `${estiloCor}:${letra}`;
+  let pin = iconeMarcadorCache.get(chave);
+  if (!pin) {
+    pin = document.createElement('span');
+    pin.className = 'corpo-marcador';
+    pin.style.setProperty('--cor-risco', estiloCor);
+    pin.setAttribute('aria-hidden', 'true');
+    const letraEl = document.createElement('b');
+    letraEl.textContent = letra;
+    pin.append(letraEl);
+    iconeMarcadorCache.set(chave, pin);
+  }
+  return pin.cloneNode(true) as HTMLSpanElement;
+}
+
+/** Limita o tamanho dos caches para evitar vazamento de memória */
+function limitarCaches() {
+  if (iconeGrupoCache.size > 100) {
+    const primeiras = Array.from(iconeGrupoCache.keys()).slice(0, 50);
+    primeiras.forEach((k) => iconeGrupoCache.delete(k));
+  }
+  if (iconeMarcadorCache.size > 200) {
+    const primeiras = Array.from(iconeMarcadorCache.keys()).slice(0, 100);
+    primeiras.forEach((k) => iconeMarcadorCache.delete(k));
+  }
+  // Limpa pools de etiquetas excedentes
+  for (const [total, pool] of etiquetaQuantidadePool.entries()) {
+    if (pool.length > 10) {
+      pool.length = 10;
+    }
+    if (pool.length === 0) {
+      etiquetaQuantidadePool.delete(total);
+    }
+  }
 }
 
 function MapaBase({
@@ -193,77 +273,23 @@ function MapaBase({
     };
   }, [aoAtualizar, tentativa]);
 
-  useEffect(() => {
-    const mapa = mapaRef.current;
-    const L = bibliotecaRef.current;
-    if (!pronto || !mapa || !L) return;
-    let cancelado = false;
-    const lote = ++geracao.current;
-    const inicio = performance.now();
-    const niveis = new WeakMap<Leaflet.Marker, NivelRisco>();
-    aoAtualizar({
-      fase: 'carregando',
-      processados: 0,
-      total: pontos.length,
-      duracaoMs: 0,
-    });
-    const grupos = L.markerClusterGroup({
-      chunkedLoading: true,
-      chunkInterval: 32,
-      chunkDelay: 8,
-      animate: permiteMovimento(),
-      animateAddingMarkers: false,
-      maxClusterRadius: 55,
-      removeOutsideVisibleBounds: true,
-      showCoverageOnHover: false,
-      spiderfyOnMaxZoom: true,
-      chunkProgress: (processados, total) => {
-        if (!cancelado && processados === total) setGrupoPronto(lote);
-        if (!cancelado)
-          aoAtualizar({
-            fase: processados === total ? 'pronto' : 'carregando',
-            processados,
-            total,
-            duracaoMs: Math.round(performance.now() - inicio),
-          });
-      },
-      iconCreateFunction: (grupo) => {
-        const nivel = maiorNivel(
-          grupo
-            .getAllChildMarkers()
-            .map((m) => niveis.get(m) ?? 'nao_informado'),
-        );
-        const estilo = ESTILOS_RISCO[nivel];
-        const titulo = `${grupo.getChildCount()} famílias agrupadas. Maior nível de risco informado: ${estilo.rotulo.toLowerCase()}. Ative para aproximar.`;
-        const circulo = criarEtiquetaQuantidade(grupo.getChildCount());
-        circulo.style.setProperty('--cor-risco', estilo.cor);
-        circulo.title = `${grupo.getChildCount()} famílias. Clique para aproximar.`;
-        circulo.setAttribute('aria-label', titulo);
-        return L.divIcon({
-          html: circulo,
-          className: 'agrupamento',
-          iconSize: [44, 44],
-          iconAnchor: [22, 22],
-        });
-      },
-    }).addTo(mapa);
-    gruposRef.current = grupos;
-    marcadoresRef.current.clear();
-
-    const marcadores = pontos.map((ponto) => {
+  // Função para criar um marcador individual (extraída para reutilização)
+  const criarMarcador = useCallback(
+    (
+      ponto: PontoRisco,
+      L: typeof Leaflet,
+      niveis: WeakMap<Leaflet.Marker, NivelRisco>,
+    ): Leaflet.Marker => {
       const estilo = ESTILOS_RISCO[ponto.nivelRisco];
       const nome = nomeDaFamilia(ponto);
-      const pin = document.createElement('span');
-      pin.className = 'corpo-marcador';
-      pin.style.setProperty('--cor-risco', estilo.cor);
-      pin.setAttribute('aria-hidden', 'true');
-      const letra = document.createElement('b');
-      letra.textContent = estilo.letra;
-      pin.append(letra);
-      const etiqueta = criarEtiquetaQuantidade(1);
+
+      // Usa elementos do cache para o pin
+      const pin = criarCorpoMarcador(estilo.cor, estilo.letra);
+      const etiqueta = obterEtiquetaQuantidade(1);
       etiqueta.setAttribute('aria-hidden', 'true');
       const conteudo = document.createElement('div');
       conteudo.append(pin, etiqueta);
+
       const titulo = `${nome} — representante familiar. Risco ${estilo.rotulo.toLowerCase()}`;
       const marcador = L.marker([ponto.latitude, ponto.longitude], {
         title: titulo,
@@ -277,6 +303,7 @@ function MapaBase({
           tooltipAnchor: [0, -39],
         }),
       });
+
       const fecharPeloTeclado = (evento: KeyboardEvent) => {
         if (evento.key !== 'Escape') return;
         evento.preventDefault();
@@ -284,6 +311,7 @@ function MapaBase({
         marcador.closePopup();
         marcador.getElement()?.focus();
       };
+
       marcador.on('add', () => {
         const elemento = marcador.getElement();
         elemento?.setAttribute('aria-label', titulo);
@@ -297,8 +325,10 @@ function MapaBase({
             } else fecharPeloTeclado(evento);
           };
       });
+
       niveis.set(marcador, ponto.nivelRisco);
-      // Conteúdo como nós de texto: nomes recebidos da API nunca viram HTML.
+
+      // Cria o popup (DOM nodes, não HTML strings)
       const cartao = document.createElement('div');
       cartao.className = 'identificacao-familia';
       const descricao = document.createElement('span');
@@ -324,6 +354,7 @@ function MapaBase({
       consultar.textContent = 'Ver cadastro da família';
       consultar.onclick = () => selecionarRef.current(ponto);
       cartao.append(consultar);
+
       marcador.bindPopup(cartao, {
         className: 'popup-familia',
         minWidth: 195,
@@ -332,6 +363,7 @@ function MapaBase({
         autoPanPadding: [24, 24],
         closeButton: true,
       });
+
       marcador
         .on('popupopen', () => {
           const elemento = marcador.getElement();
@@ -357,24 +389,175 @@ function MapaBase({
           marcador.getElement()?.classList.remove('familia-selecionada');
           marcador.getElement()?.setAttribute('aria-expanded', 'false');
         });
-      marcadoresRef.current.set(ponto.id, marcador);
+
       return marcador;
+    },
+    [],
+  );
+
+  // Efeito otimizado: diff dos pontos em vez de recriar tudo
+  useEffect(() => {
+    const mapa = mapaRef.current;
+    const L = bibliotecaRef.current;
+    if (!pronto || !mapa || !L) return;
+
+    let cancelado = false;
+    const lote = ++geracao.current;
+    const inicio = performance.now();
+    const niveis = new WeakMap<Leaflet.Marker, NivelRisco>();
+
+    aoAtualizar({
+      fase: 'carregando',
+      processados: 0,
+      total: pontos.length,
+      duracaoMs: 0,
     });
-    grupos.addLayers(marcadores);
-    if (!pontos.length) {
+
+    // Reutiliza ou cria o grupo de clusters
+    let grupos = gruposRef.current;
+    if (!grupos) {
+      grupos = L.markerClusterGroup({
+        chunkedLoading: true,
+        chunkInterval: 32,
+        chunkDelay: 8,
+        animate: permiteMovimento(),
+        animateAddingMarkers: false,
+        maxClusterRadius: 55,
+        removeOutsideVisibleBounds: true,
+        showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        chunkProgress: (processados, total) => {
+          if (!cancelado && processados === total) setGrupoPronto(lote);
+          if (!cancelado)
+            aoAtualizar({
+              fase: processados === total ? 'pronto' : 'carregando',
+              processados,
+              total,
+              duracaoMs: Math.round(performance.now() - inicio),
+            });
+        },
+        iconCreateFunction: (grupo) => {
+          const nivel = maiorNivel(
+            grupo
+              .getAllChildMarkers()
+              .map((m) => niveis.get(m) ?? 'nao_informado'),
+          );
+          const estilo = ESTILOS_RISCO[nivel];
+          const titulo = `${grupo.getChildCount()} famílias agrupadas. Maior nível de risco informado: ${estilo.rotulo.toLowerCase()}. Ative para aproximar.`;
+          const circulo = obterEtiquetaQuantidade(grupo.getChildCount());
+          circulo.style.setProperty('--cor-risco', estilo.cor);
+          circulo.title = `${grupo.getChildCount()} famílias. Clique para aproximar.`;
+          circulo.setAttribute('aria-label', titulo);
+          // Note: cluster icons are recreated on each render, so we don't return them to pool here
+          // The pool is mainly for marker labels which are reused when markers are recreated
+          return L.divIcon({
+            html: circulo,
+            className: 'agrupamento',
+            iconSize: [44, 44],
+            iconAnchor: [22, 22],
+          });
+        },
+      }).addTo(mapa);
+      gruposRef.current = grupos;
+    }
+
+    // Diff: calcula quais pontos adicionar, remover ou atualizar
+    const pontosAtuais = new Map<string, PontoRisco>();
+    pontos.forEach((p) => pontosAtuais.set(p.id, p));
+
+    const marcadoresExistentes = marcadoresRef.current;
+    const idsExistentes = new Set(marcadoresExistentes.keys());
+    const idsNovos = new Set(pontosAtuais.keys());
+
+    // IDs a remover (não estão mais na nova lista)
+    const idsParaRemover = [...idsExistentes].filter((id) => !idsNovos.has(id));
+    // IDs a adicionar (novos)
+    const idsParaAdicionar = [...idsNovos].filter((id) => !idsExistentes.has(id));
+    // IDs que existem em ambos - verificar se posição/nivel mudou
+    const idsParaVerificar = [...idsExistentes].filter((id) => idsNovos.has(id));
+
+    let processados = 0;
+    const totalOperacoes = idsParaRemover.length + idsParaAdicionar.length + idsParaVerificar.length;
+
+    const atualizarProgresso = () => {
+      processados++;
+      if (!cancelado)
+        aoAtualizar({
+          fase: processados === totalOperacoes ? 'pronto' : 'carregando',
+          processados,
+          total: totalOperacoes,
+          duracaoMs: Math.round(performance.now() - inicio),
+        });
+    };
+
+    // Remove marcadores obsoletos
+    for (const id of idsParaRemover) {
+      if (cancelado) break;
+      const marcador = marcadoresExistentes.get(id);
+      if (marcador) {
+        grupos.removeLayer(marcador);
+        marcadoresExistentes.delete(id);
+      }
+      atualizarProgresso();
+    }
+
+    // Adiciona novos marcadores
+    const marcadoresParaAdicionar: Leaflet.Marker[] = [];
+    for (const id of idsParaAdicionar) {
+      if (cancelado) break;
+      const ponto = pontosAtuais.get(id);
+      if (ponto) {
+        const marcador = criarMarcador(ponto, L, niveis);
+        marcadoresExistentes.set(id, marcador);
+        marcadoresParaAdicionar.push(marcador);
+      }
+      atualizarProgresso();
+    }
+
+    // Verifica marcadores existentes para atualizações de posição/nível
+    for (const id of idsParaVerificar) {
+      if (cancelado) break;
+      const ponto = pontosAtuais.get(id);
+      const marcador = marcadoresExistentes.get(id);
+      if (ponto && marcador) {
+        const latLngAtual = marcador.getLatLng();
+        if (
+          latLngAtual.lat !== ponto.latitude ||
+          latLngAtual.lng !== ponto.longitude
+        ) {
+          marcador.setLatLng([ponto.latitude, ponto.longitude]);
+        }
+        // Atualiza nível de risco se mudou
+        const nivelAtual = niveis.get(marcador);
+        if (nivelAtual !== ponto.nivelRisco) {
+          niveis.set(marcador, ponto.nivelRisco);
+          // O ícone do cluster será atualizado no próximo chunkProgress
+        }
+      }
+      atualizarProgresso();
+    }
+
+    // Adiciona novos marcadores em lote (mais eficiente)
+    if (marcadoresParaAdicionar.length > 0) {
+      grupos.addLayers(marcadoresParaAdicionar);
+    }
+
+    // Limita caches periodicamente
+    limitarCaches();
+
+    if (!pontos.length && totalOperacoes === 0) {
       setGrupoPronto(lote);
       aoAtualizar({ fase: 'pronto', processados: 0, total: 0, duracaoMs: 0 });
     }
+
     return () => {
-      // Only cleanup if this effect's generation is still current
-      // Prevents stale effect from removing markers added by newer effect
       if (lote !== geracao.current) return;
       cancelado = true;
       grupos.remove();
       gruposRef.current = null;
       marcadoresRef.current.clear();
     };
-  }, [pontos, pronto, aoAtualizar]);
+  }, [pontos, pronto, aoAtualizar, criarMarcador]);
 
   useEffect(() => {
     if (

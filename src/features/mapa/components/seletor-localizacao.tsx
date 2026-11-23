@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
-import { adicionarLimiteGoiana } from '@/features/mapa/lib/territorio';
+import { adicionarLimiteGoiana, dentroDeGoiana } from '@/features/mapa/lib/territorio';
 import { CENTRO_GOIANA } from '@/features/mapa/lib/pontos';
 import type { LocalizacaoFamilia } from '@/features/mapa/lib/familias';
 
@@ -59,12 +59,18 @@ export default function SeletorLocalizacao({
           attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
         }).addTo(instancia);
-        const escolher = (lat: number, lng: number) =>
+        const escolher = (lat: number, lng: number) => {
+          // Validate that the point is within Goiana municipality boundaries
+          if (!dentroDeGoiana(lng, lat)) {
+            alert('O ponto selecionado está fora dos limites do município de Goiana. Por favor, selecione um local dentro do município.');
+            return;
+          }
           selecionar.current({
             latitude: Number(lat.toFixed(7)),
             longitude: Number(lng.toFixed(7)),
             origem: 'mapa',
           });
+        };
         instancia.on('click', (evento: Leaflet.LeafletMouseEvent) =>
           escolher(evento.latlng.lat, evento.latlng.lng),
         );
@@ -193,12 +199,18 @@ export default function SeletorLocalizacao({
         disabled={estado !== 'pronto'}
         onClick={() => {
           const centro = mapa.current?.getCenter();
-          if (centro)
+          if (centro) {
+            // Validate that the center point is within Goiana municipality boundaries
+            if (!dentroDeGoiana(centro.lng, centro.lat)) {
+              alert('O centro do mapa atual está fora dos limites do município de Goiana. Por favor, navegue para uma área dentro do município.');
+              return;
+            }
             selecionar.current({
               latitude: Number(centro.lat.toFixed(7)),
               longitude: Number(centro.lng.toFixed(7)),
               origem: 'mapa',
             });
+          }
         }}
       >
         Usar o centro do mapa

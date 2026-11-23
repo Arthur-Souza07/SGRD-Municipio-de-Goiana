@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import type * as Leaflet from 'leaflet';
 import {
   prepararPontosCalor,
   type PontoCalor,
 } from '@/features/mapa/lib/calor';
 import type { CamadaCalor } from '@/features/mapa/lib/camada-calor';
-import type { PontoRisco } from '@/features/mapa/lib/pontos';
+import type { PontoRisco } from '@/features/mapa/lib/familias';
 
 export interface EstadoCalor {
   fase: 'desligado' | 'carregando' | 'ativo' | 'vazio' | 'erro';
@@ -18,11 +18,11 @@ interface Props {
   ativo: boolean;
 }
 
-/** Densidade em um canvas reutilizado, sem um nó DOM por família. */
+/** Densidade em um canvas reutilizado, sem um nó DOM por família.
+ *  Computação pesada offloaded para Web Worker (dentro da camada Leaflet). */
 export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
   // Alternar a camada e mover o mapa não refazem a conversão das coordenadas.
   const dados = useMemo(() => prepararPontosCalor(pontos), [pontos]);
-  const dadosRef = useRef(dados);
   const camadaRef = useRef<CamadaCalor | null>(null);
   const aplicadosRef = useRef<PontoCalor[] | null>(null);
   const [fase, setFase] = useState<EstadoCalor['fase']>('desligado');
@@ -30,6 +30,16 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
   erroRef.current = () => setFase('erro');
   const [tentativa, setTentativa] = useState(0);
 
+  // Memoiza a função de atualização para evitar re-renders desnecessários
+  const atualizarDadosCamada = useCallback((novosDados: PontoCalor[]) => {
+    const camada = camadaRef.current;
+    if (camada && aplicadosRef.current !== novosDados) {
+      camada.setLatLngs(novosDados);
+      aplicadosRef.current = novosDados;
+    }
+  }, []);
+
+  // Cleanup quando o mapa muda
   useEffect(
     () => () => {
       camadaRef.current?.remove();
@@ -39,7 +49,7 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
     [mapa],
   );
 
-  // Efeito único: gerencia criação, atualização de dados e anexação/remoção da camada.
+  // Efeito principal: gerencia criação, atualização de dados e anexação/remoção da camada
   useEffect(() => {
     let cancelado = false;
     let quadro: number | undefined;
@@ -47,9 +57,6 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
     let remocao: ReturnType<typeof setTimeout> | undefined;
 
     const canvas = () => camadaRef.current?.getElement();
-
-    // Atualiza a referência dos dados imediatamente para evitar race conditions
-    dadosRef.current = dados;
 
     if (!ativo || !mapa) {
       setFase('desligado');
@@ -72,15 +79,12 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
 
     async function mostrar() {
       const L = (await import('leaflet')).default;
-      const { criarCamadaCalor } =
-        await import('@/features/mapa/lib/camada-calor');
+      const { criarCamadaCalor } = await import('@/features/mapa/lib/camada-calor');
       if (cancelado) return;
 
       // Cria a camada se não existir, usando os dados atuais
       if (!camadaRef.current) {
-        camadaRef.current = criarCamadaCalor(L, dados, () =>
-          erroRef.current(),
-        );
+        camadaRef.current = criarCamadaCalor(L, dados, () => erroRef.current());
         aplicadosRef.current = dados;
       }
 
@@ -90,11 +94,8 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
       const estavaVisivel = mapaAtual.hasLayer(camada);
       if (!estavaVisivel) camada.addTo(mapaAtual);
 
-      // Atualiza os dados da camada se mudaram
-      if (aplicadosRef.current !== dados) {
-        camada.setLatLngs(dados);
-        aplicadosRef.current = dados;
-      }
+      // Atualiza os dados da camada se mudaram (usa callback memoizado)
+      atualizarDadosCamada(dados);
 
       // A descrição textual fica na legenda; os marcadores continuam acessíveis.
       const elemento = canvas();
@@ -122,7 +123,7 @@ export function useCamadaCalor({ mapa, pontos, ativo }: Props) {
       if (quadro !== undefined) cancelAnimationFrame(quadro);
       if (segundoQuadro !== undefined) cancelAnimationFrame(segundoQuadro);
     };
-  }, [ativo, mapa, dados, tentativa]);
+  }, [ativo, mapa, dados, tentativa, atualizarDadosCamada]);
 
   const estado = useMemo<EstadoCalor>(
     () => ({ fase, quantidade: dados.length }),

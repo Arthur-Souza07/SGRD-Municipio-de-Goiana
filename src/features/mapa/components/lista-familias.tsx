@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
-import { ESTILOS_RISCO, nomeDaFamilia } from '@/features/mapa/lib/pontos';
+import { ESTILOS_RISCO } from '@/features/mapa/lib/pontos';
+import { nomeDaFamilia } from '@/features/mapa/lib/familias';
 import type { CadastroFamilia } from '@/features/mapa/lib/familias';
 
 const TAMANHO = 10;

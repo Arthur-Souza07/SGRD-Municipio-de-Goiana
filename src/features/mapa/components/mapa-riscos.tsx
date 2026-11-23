@@ -18,9 +18,8 @@ import {
 import {
   contarNiveis,
   ESTILOS_RISCO,
-  type NivelRisco,
-  type PontoRisco,
 } from '@/features/mapa/lib/pontos';
+import type { NivelRisco, PontoRisco } from '@/features/mapa/lib/familias';
 import { ESCALA_CALOR } from '@/features/mapa/lib/calor';
 import type { EstadoPlotagem } from './mapa-base';
 import type { EstadoCalor } from './use-camada-calor';

@@ -1,5 +1,5 @@
-import type { CadastroFamilia, DadosFamilia } from './familias';
-import { nomeDaFamilia, type NivelRisco } from './pontos';
+import type { CadastroFamilia, DadosFamilia, NivelRisco } from './familias';
+import { nomeDaFamilia } from './familias';
 
 export function normalizarBusca(texto: string): string {
   return texto

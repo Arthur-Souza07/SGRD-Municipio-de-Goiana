@@ -1,25 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import {
-  carregarDemonstracao,
-  normalizarDemonstracao,
-} from '../src/features/mapa/lib/demonstracao';
+import { gerarFamiliasDemo } from '../src/features/mapa/lib/gerador-familias';
+import { criarCadastroDemonstrativo } from '../src/features/mapa/lib/familias';
 import { normalizarPontos } from '../src/features/mapa/lib/pontos';
 import { calcularIdade } from '../src/features/mapa/lib/integrantes';
 import { cpfValido } from '../src/features/mapa/lib/familias';
+import { dentroDeGoiana } from '../src/features/mapa/lib/territorio';
 
-const ler = (nome: string) =>
-  JSON.parse(
-    readFileSync(new URL(`../public/${nome}`, import.meta.url), 'utf8'),
-  );
-const familias = ler('dados-exemplo.json');
-type Posicao = [number, number];
-type Geometria = {
-  type: 'Polygon' | 'MultiPolygon';
-  coordinates: Posicao[][] | Posicao[][][];
-};
-function emAnel([x, y]: Posicao, anel: Posicao[]): boolean {
+function emAnel([x, y]: [number, number], anel: [number, number][]): boolean {
   let dentro = false;
   for (let i = 0, j = anel.length - 1; i < anel.length; j = i++) {
     const [xi, yi] = anel[i];
@@ -29,11 +17,15 @@ function emAnel([x, y]: Posicao, anel: Posicao[]): boolean {
   }
   return dentro;
 }
-function emGeometria(posicao: Posicao, geometria: Geometria): boolean {
+
+function emGeometria(posicao: [number, number], geometria: {
+  type: 'Polygon' | 'MultiPolygon';
+  coordinates: [number, number][][] | [number, number][][][];
+}): boolean {
   const poligonos =
     geometria.type === 'Polygon'
-      ? [geometria.coordinates as Posicao[][]]
-      : (geometria.coordinates as Posicao[][][]);
+      ? [geometria.coordinates as [number, number][][]]
+      : (geometria.coordinates as [number, number][][][]);
   return poligonos.some(
     (poligono) =>
       emAnel(posicao, poligono[0]) &&
@@ -41,200 +33,213 @@ function emGeometria(posicao: Posicao, geometria: Geometria): boolean {
   );
 }
 
-test('base contém 500 famílias fictícias distintas e dados úteis para consulta', () => {
-  assert.equal(familias.length, 500);
-  assert.equal(new Set(familias.map((p: { id: string }) => p.id)).size, 500);
-  assert.equal(
-    new Set(
-      familias.map((p: { nomeRepresentante: string }) => p.nomeRepresentante),
-    ).size,
-    500,
-  );
-  for (const p of familias) {
-    assert.match(p.id, /^exemplo-\d{4}$/);
-    assert.ok(
-      p.nomeRepresentante.length >= 3 && p.nomeRepresentante.length <= 120,
-    );
-    assert.ok(
-      p.resumoDemonstrativo.moradores >= 1 &&
-        p.resumoDemonstrativo.moradores <= 7,
-    );
-    assert.ok(p.resumoDemonstrativo.referenciaLocal.length > 10);
-    assert.match(p.resumoDemonstrativo.nucleo, /^Sede de Goiana/);
-    assert.equal(
-      p.resumoDemonstrativo.integrantes.length,
-      p.resumoDemonstrativo.moradores,
-    );
-    assert.equal(
-      p.resumoDemonstrativo.integrantes[0].nomeCompleto,
-      p.nomeRepresentante,
-    );
-    assert.equal(
-      p.resumoDemonstrativo.integrantes[0].parentesco,
-      'representante',
-    );
-    for (const pessoa of p.resumoDemonstrativo.integrantes) {
-      assert.notEqual(calcularIdade(pessoa.dataNascimento), null);
-      assert.equal(pessoa.cpf, '00000000000');
-      assert.equal(cpfValido(pessoa.cpf), false);
-    }
-    assert.ok(!('cpf' in p) && !('telefone' in p) && !('dados' in p));
-    assert.deepEqual(Object.keys(p.resumoDemonstrativo).sort(), [
-      'areaSgb',
-      'integrantes',
-      'moradores',
-      'nucleo',
-      'referenciaLocal',
-    ]);
+// Converte data DD/MM/AAAA para AAAA-MM-DD para calcularIdade
+function dataParaISO(dataBR: string): string {
+  if (!dataBR) return '';
+  const parts = dataBR.split('/');
+  if (parts.length === 3) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
   }
-  assert.deepEqual(
-    [
-      ...new Set(familias.map((p: { nivelRisco: string }) => p.nivelRisco)),
-    ].sort(),
-    ['alto', 'baixo', 'medio'],
-  );
+  return dataBR;
+}
+
+test('gerarFamiliasDemo produz 50 famílias com seed reprodutível', () => {
+  const familias1 = gerarFamiliasDemo(50, 20261030);
+  const familias2 = gerarFamiliasDemo(50, 20261030);
+
+  assert.equal(familias1.length, 50);
+  assert.equal(familias2.length, 50);
+
+  // Verify reproducibility - same seed produces same data
+  for (let i = 0; i < 50; i++) {
+    assert.equal(familias1[i].nomeRepresentante, familias2[i].nomeRepresentante);
+    assert.equal(familias1[i].cpf, familias2[i].cpf);
+    assert.equal(familias1[i].latitude, familias2[i].latitude);
+    assert.equal(familias1[i].longitude, familias2[i].longitude);
+    assert.equal(familias1[i].nivelRisco, familias2[i].nivelRisco);
+  }
 });
 
-test('cada ponto está dentro da área média ou alta do SGB informada nos seus detalhes', () => {
-  const sgb = ler('camadas/suscetibilidade-goiana.geojson');
-  const areas = new Map(
-    sgb.features.map(
-      (f: { properties: { id: string }; geometry: Geometria }) => [
-        f.properties.id,
-        f,
-      ],
-    ),
-  );
+test('famílias geradas têm todos os campos obrigatórios do template Excel', () => {
+  const familias = gerarFamiliasDemo(10, 20261030);
+
   for (const familia of familias) {
-    const referencia = familia.resumoDemonstrativo.areaSgb;
-    const area = areas.get(referencia.id) as {
-      properties: { descricao: string; camada: string };
-      geometry: Geometria;
-    };
-    assert.ok(area, familia.id);
-    assert.ok(['Alta', 'Média'].includes(area.properties.descricao));
-    assert.equal(referencia.classe, area.properties.descricao);
-    assert.equal(referencia.camada, area.properties.camada);
-    assert.ok(
-      emGeometria([familia.longitude, familia.latitude], area.geometry),
-      `${familia.id} fora da área ${referencia.id}`,
-    );
+    // Campos básicos
+    assert.ok(familia.nomeRepresentante.length >= 3);
+    assert.ok(familia.cpf.length === 11); // apenas dígitos
+    assert.ok(familia.telefone.length >= 10);
+    assert.ok(familia.logradouro.length > 0);
+    assert.ok(familia.numero.length > 0);
+    assert.ok(familia.bairro.length > 0);
+    assert.ok(familia.moradores >= 1 && familia.moradores <= 8);
+    assert.ok(['alto', 'medio', 'baixo'].includes(familia.nivelRisco));
+    // tipoOcorrencia é a chave (ex: 'inundacao'), não o rótulo de exibição
+    assert.ok(typeof familia.tipoOcorrencia === 'string' && familia.tipoOcorrencia.length > 0);
+
+    // Localização - use actual IBGE 2025 bounds for Goiana municipality
+    assert.ok(familia.localizacao.latitude >= -7.7147 && familia.localizacao.latitude <= -7.4620);
+    assert.ok(familia.localizacao.longitude >= -35.0778 && familia.localizacao.longitude <= -34.8067);
+    // Additional check: ensure coordinates are actually inside the municipality polygon
+    assert.ok(dentroDeGoiana(familia.localizacao.longitude, familia.localizacao.latitude));
+    assert.ok(['gps', 'mapa', 'coordenadas'].includes(familia.localizacao.origem));
+
+    // Seções do template Excel
+    assert.ok(familia.informacaoImovel);
+    assert.equal(familia.informacaoImovel?.municipio, 'GOIANA / PE');
+    assert.ok(familia.informacaoImovel?.dataCadastro);
+    assert.ok(familia.informacaoImovel?.tipoRisco);
+    assert.ok(familia.informacaoImovel?.grauRisco);
+
+    assert.ok(familia.caracterizacaoImovel);
+    assert.ok(familia.caracterizacaoImovel?.usoImovel);
+    assert.ok(familia.caracterizacaoImovel?.condicoesOcupacao);
+    assert.ok(familia.caracterizacaoImovel?.areaTerreno);
+    assert.ok(familia.caracterizacaoImovel?.areaConstrucao);
+    assert.ok(Array.isArray(familia.caracterizacaoImovel?.comodos));
+
+    assert.ok(familia.condicoesHabitabilidade);
+    assert.ok(familia.condicoesHabitabilidade?.tipoConstrucao);
+    assert.ok(familia.condicoesHabitabilidade?.padraoAcabamento);
+    assert.ok(familia.condicoesHabitabilidade?.tipoCoberta);
+    assert.ok(familia.condicoesHabitabilidade?.saneamentoBasico);
+    assert.ok(familia.condicoesHabitabilidade?.abastecimentoAgua);
+    assert.ok(familia.condicoesHabitabilidade?.aguasPluviais);
+    assert.ok(familia.condicoesHabitabilidade?.pavimentacao);
+    assert.ok(familia.condicoesHabitabilidade?.iluminacaoPublica);
+    assert.ok(familia.condicoesHabitabilidade?.coletaResiduos);
+
+    // Chefe da família
+    assert.ok(familia.chefeFamilia);
+    assert.ok(familia.chefeFamilia?.nome);
+    assert.ok(familia.chefeFamilia?.cpf);
+    assert.ok(familia.chefeFamilia?.rg);
+    assert.ok(familia.chefeFamilia?.dataNascimento);
+    assert.ok(typeof familia.chefeFamilia?.idade === 'number');
+    assert.ok(familia.chefeFamilia?.telefone);
+    assert.ok(familia.chefeFamilia?.estadoCivil);
+    assert.ok(familia.chefeFamilia?.identidadeGenero);
+    assert.ok(familia.chefeFamilia?.racaCor);
+    assert.ok(familia.chefeFamilia?.possuiDeficiencia === 'sim' || familia.chefeFamilia?.possuiDeficiencia === 'nao');
+
+    // Composição familiar
+    assert.ok(Array.isArray(familia.demaisMembros));
+    const totalMembros = 1 + (familia.conjuge ? 1 : 0) + familia.demaisMembros.length;
+    assert.equal(familia.moradores, totalMembros);
+
+    // Histórico de ocorrências
+    assert.ok(Array.isArray(familia.historicoOcorrencias));
+
+    // Interdições, desalojamentos, benefícios, etc.
+    assert.ok(Array.isArray(familia.interdictioes));
+    assert.ok(Array.isArray(familia.desalojamentos));
+    assert.ok(Array.isArray(familia.beneficiosAuxilios));
+    assert.ok(familia.encaminhamentoHabitacional);
+    assert.ok(familia.historicoVistorias);
+    assert.ok(familia.situacaoAtual);
+    assert.ok(familia.documentosFotograficos);
   }
 });
 
-test('os 500 pontos permanecem em áreas edificadas e não se sobrepõem artificialmente', () => {
-  const urbanas = ler('demonstracao/areas-edificadas.geojson');
-  for (let i = 0; i < familias.length; i++) {
-    const p = familias[i];
-    assert.ok(
-      urbanas.features.some((f: { geometry: Geometria }) =>
-        emGeometria([p.longitude, p.latitude], f.geometry),
-      ),
-      `${p.id} fora da ocupação urbana`,
-    );
-    for (let j = i + 1; j < familias.length; j++) {
-      const outro = familias[j];
-      const dy = (outro.latitude - p.latitude) * 110574;
-      const dx =
-        (outro.longitude - p.longitude) *
-        111320 *
-        Math.cos((p.latitude * Math.PI) / 180);
-      assert.ok(Math.hypot(dx, dy) > 8.5, `${p.id} e ${outro.id} sobrepostos`);
+test('distribuição de risco segue proporções esperadas (30% alto, 40% médio, 30% baixo)', () => {
+  const familias = gerarFamiliasDemo(1000, 20261030);
+  const contagem = { alto: 0, medio: 0, baixo: 0 };
+
+  for (const familia of familias) {
+    contagem[familia.nivelRisco]++;
+  }
+
+  // Allow some variance due to randomness
+  assert.ok(contagem.alto >= 250 && contagem.alto <= 350, `alto: ${contagem.alto}`);
+  assert.ok(contagem.medio >= 350 && contagem.medio <= 450, `medio: ${contagem.medio}`);
+  assert.ok(contagem.baixo >= 250 && contagem.baixo <= 350, `baixo: ${contagem.baixo}`);
+});
+
+test('criarCadastroDemonstrativo converte DadosFamilia para CadastroFamilia corretamente', () => {
+  const familias = gerarFamiliasDemo(5, 20261030);
+
+  for (const dados of familias) {
+    const cadastro = criarCadastroDemonstrativo(dados);
+
+    assert.ok(cadastro.id.startsWith('demo-'));
+    assert.equal(cadastro.nomeRepresentante, dados.nomeRepresentante);
+    assert.equal(cadastro.latitude, dados.localizacao.latitude);
+    assert.equal(cadastro.longitude, dados.localizacao.longitude);
+    assert.equal(cadastro.nivelRisco, dados.nivelRisco);
+    assert.ok(cadastro.dados);
+    assert.equal(cadastro.dados?.nomeRepresentante, dados.nomeRepresentante);
+    assert.ok(cadastro.criadoEm);
+  }
+});
+
+test('famílias de demonstração têm CPFs válidos com dígitos verificadores', () => {
+  const familias = gerarFamiliasDemo(20, 20261030);
+
+  for (const familia of familias) {
+    // CPF do chefe
+    assert.equal(cpfValido(familia.chefeFamilia?.cpf || ''), true);
+
+    // CPF do cônjuge se existir
+    if (familia.conjuge?.cpf) {
+      assert.equal(cpfValido(familia.conjuge.cpf), true);
+    }
+
+    // CPFs dos demais membros
+    for (const membro of familia.demaisMembros) {
+      if (membro.cpf) {
+        assert.equal(cpfValido(membro.cpf), true);
+      }
     }
   }
 });
 
-test('a normalização demonstrativa mantém somente o resumo permitido e a API real ignora esse resumo', () => {
-  const item = {
-    ...familias[0],
-    cpf: 'não copiar',
-    telefone: 'não copiar',
-    resumoDemonstrativo: {
-      ...familias[0].resumoDemonstrativo,
-      cpf: 'não copiar',
-    },
-  };
-  const resultado = normalizarDemonstracao([item]);
-  assert.equal(resultado.pontos.length, 1);
-  assert.equal(resultado.descartados, 0);
-  assert.equal('cpf' in resultado.pontos[0], false);
-  assert.equal('cpf' in resultado.pontos[0].resumoDemonstrativo!, false);
-  assert.equal(
-    'resumoDemonstrativo' in normalizarPontos([item]).pontos[0],
-    false,
-  );
-});
+test('idades calculadas corretamente baseadas na data de nascimento', () => {
+  const familias = gerarFamiliasDemo(10, 20261030);
 
-test('contexto demonstrativo inválido não transforma um ponto em um cadastro completo', () => {
-  const p = familias[0];
-  const resultado = normalizarDemonstracao([
-    { ...p, resumoDemonstrativo: { ...p.resumoDemonstrativo, moradores: 0 } },
-    { ...p, id: 'invalido', latitude: null },
-  ]);
-  assert.equal(resultado.pontos.length, 1);
-  assert.equal(resultado.descartados, 1);
-  assert.equal(resultado.pontos[0].resumoDemonstrativo, undefined);
-});
+  for (const familia of familias) {
+    // Chefe
+    const idadeChefe = calcularIdade(dataParaISO(familia.chefeFamilia?.dataNascimento || ''));
+    assert.ok(idadeChefe !== null);
+    assert.equal(familia.chefeFamilia?.idade, idadeChefe);
 
-test('carregamento demonstrativo respeita cancelamento e informa falha HTTP', async (t) => {
-  const signal = new AbortController().signal;
-  const chamada = t.mock.method(globalThis, 'fetch', async () =>
-    Response.json(familias),
-  );
-  const resultado = await carregarDemonstracao('/dados-exemplo.json', signal);
-  assert.equal(resultado.pontos.length, 500);
-  const opcoes = chamada.mock.calls[0].arguments[1] as RequestInit;
-  assert.equal(opcoes.signal, signal);
-  assert.equal(opcoes.cache, 'no-store');
-  chamada.mock.mockImplementation(
-    async () => new Response('', { status: 503 }),
-  );
-  await assert.rejects(
-    carregarDemonstracao('/dados-exemplo.json'),
-    /Não foi possível carregar/,
-  );
-});
+    // Cônjuge
+    if (familia.conjuge) {
+      const idadeConjuge = calcularIdade(dataParaISO(familia.conjuge.dataNascimento));
+      assert.ok(idadeConjuge !== null);
+      assert.equal(familia.conjuge.idade, idadeConjuge);
+    }
 
-test('todos os pontos respeitam o limite municipal do IBGE e ficam na sede, longe de Itapissuma e Itamaracá', () => {
-  const limite = JSON.parse(
-    readFileSync(
-      new URL('../src/features/mapa/data/limite-goiana.json', import.meta.url),
-      'utf8',
-    ),
-  );
-  assert.equal(limite.properties.codigoIbge, '2606200');
-  assert.equal(limite.properties.ano, 2025);
-  for (const p of familias) {
-    assert.ok(
-      emGeometria([p.longitude, p.latitude], limite.geometry),
-      `${p.id} fora de Goiana`,
-    );
-    const dy = (p.latitude + 7.5606) * 110574;
-    const dx = (p.longitude + 35.0025) * 110350;
-    assert.ok(Math.hypot(dx, dy) < 3600, `${p.id} longe da sede`);
+    // Demais membros
+    for (const membro of familia.demaisMembros) {
+      const idadeMembro = calcularIdade(dataParaISO(membro.dataNascimento));
+      assert.ok(idadeMembro !== null);
+      assert.equal(membro.idade, idadeMembro);
+    }
   }
 });
 
-test('origem demonstrativa bloqueia pontos de municípios vizinhos e CPF real injetado no resumo', () => {
-  const p = familias[0];
-  const fora = {
-    ...p,
-    id: 'itapissuma',
-    latitude: -7.7764,
-    longitude: -34.8927,
-  };
-  assert.equal(normalizarDemonstracao([fora]).pontos.length, 0);
-  assert.equal(normalizarDemonstracao([fora]).descartados, 1);
-  const resumo = {
-    ...p.resumoDemonstrativo,
-    integrantes: p.resumoDemonstrativo.integrantes.map((pessoa: object) => ({
-      ...pessoa,
-      cpf: '11144477735',
-    })),
-  };
-  assert.equal(
-    normalizarDemonstracao([{ ...p, resumoDemonstrativo: resumo }]).pontos[0]
-      .resumoDemonstrativo,
-    undefined,
-  );
+test('diferentes seeds produzem famílias diferentes', () => {
+  const familias1 = gerarFamiliasDemo(10, 12345);
+  const familias2 = gerarFamiliasDemo(10, 67890);
+
+  let diferentes = 0;
+  for (let i = 0; i < 10; i++) {
+    if (familias1[i].nomeRepresentante !== familias2[i].nomeRepresentante) {
+      diferentes++;
+    }
+  }
+  // With different seeds, most should be different
+  assert.ok(diferentes >= 8);
+});
+
+test('obterFamiliasDemo funciona de forma síncrona', async () => {
+  // Import the function using dynamic import
+  const { obterFamiliasDemo } = await import('../src/features/mapa/lib/demonstracao.ts');
+  const pontos = obterFamiliasDemo();
+
+  assert.equal(pontos.length, 50);
+  for (const ponto of pontos) {
+    assert.ok(ponto.id.startsWith('demo-'));
+    assert.ok(ponto.dados);
+    assert.ok(ponto.nomeRepresentante);
+  }
 });

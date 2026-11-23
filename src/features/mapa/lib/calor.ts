@@ -132,6 +132,8 @@ const PARADAS = Object.entries(GRADIENTE_CALOR)
     rgb: [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)),
   }))
   .sort((a, b) => a.posicao - b.posicao);
+
+// Precompute CORES array first (needed by GRADIENT_LUT)
 const CORES = Array.from({ length: 1024 }, (_, indice) => {
   const nivel = indice / 1023;
   const direita =
@@ -146,7 +148,35 @@ const CORES = Array.from({ length: 1024 }, (_, indice) => {
     Math.round(cor + (direita.rgb[i] - cor) * t),
   );
 });
-/** Mesma escala em qualquer janela/zoom/filtro. Alfa máximo de 64% preserva as ruas. */
+
+// Precompute gradient lookup table once (256 entries is sufficient for 8-bit output)
+// LUT[i] = color for nivel = i / 255 (matching runtime lookup: idx = round(nivel * 255))
+const GRADIENT_LUT = (() => {
+  const lut = new Uint8ClampedArray(256 * 4);
+  const normalizacao = Math.log1p(DENSIDADE_CALOR_REFERENCIA);
+  for (let i = 0; i < 256; i++) {
+    const nivel = i / 255;
+    // Convert nivel back to density using inverse of log1p: density = expm1(nivel * normalizacao)
+    const densidade = Math.expm1(nivel * normalizacao);
+    const pos = nivel * 1023;
+    const idx = Math.floor(pos);
+    const t = pos - idx;
+    const direita = CORES[Math.min(idx + 1, 1023)];
+    const esquerda = CORES[idx];
+    const r = Math.round(esquerda[0] + (direita[0] - esquerda[0]) * t);
+    const g = Math.round(esquerda[1] + (direita[1] - esquerda[1]) * t);
+    const b = Math.round(esquerda[2] + (direita[2] - esquerda[2]) * t);
+    const alpha = Math.round(255 * Math.min(0.64, densidade * 0.5));
+    lut[i * 4] = r;
+    lut[i * 4 + 1] = g;
+    lut[i * 4 + 2] = b;
+    lut[i * 4 + 3] = alpha;
+  }
+  return lut;
+})();
+
+/** Mesma escala em qualquer janela/zoom/filtro. Alfa máximo de 64% preserva as ruas.
+ * Otimizado: usa lookup table (LUT) de 256 entradas em vez de interpolação por pixel. */
 export function colorirCampoCalor(valores: Float32Array): Uint8ClampedArray {
   const rgba = new Uint8ClampedArray(valores.length * 4);
   const normalizacao = Math.log1p(DENSIDADE_CALOR_REFERENCIA);
@@ -154,11 +184,12 @@ export function colorirCampoCalor(valores: Float32Array): Uint8ClampedArray {
     const densidade = valores[i];
     if (!Number.isFinite(densidade) || densidade <= 0) continue;
     const nivel = Math.min(1, Math.log1p(densidade) / normalizacao);
-    const cor = CORES[Math.round(nivel * 1023)];
-    rgba[i * 4] = cor[0];
-    rgba[i * 4 + 1] = cor[1];
-    rgba[i * 4 + 2] = cor[2];
-    rgba[i * 4 + 3] = Math.round(255 * Math.min(0.64, densidade * 0.5));
+    const idx = Math.min(255, Math.round(nivel * 255));
+    const base = idx * 4;
+    rgba[i * 4] = GRADIENT_LUT[base];
+    rgba[i * 4 + 1] = GRADIENT_LUT[base + 1];
+    rgba[i * 4 + 2] = GRADIENT_LUT[base + 2];
+    rgba[i * 4 + 3] = GRADIENT_LUT[base + 3];
   }
   return rgba;
 }

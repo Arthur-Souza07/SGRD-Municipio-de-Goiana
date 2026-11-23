@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import type { FeatureCollection, Feature, Geometry } from 'geojson';
 import {
@@ -46,6 +46,34 @@ const CORES_GEOLOGIA = [
   '#b7a8a0',
 ];
 
+// Cache de ícones de estação para evitar recriação
+const iconeEstacaoCache = new Map<string, HTMLSpanElement>();
+
+function obterIconeEstacao(estacao: EstacaoAmbiental): HTMLSpanElement {
+  const antiga = leituraAntiga(estacao);
+  const chave = `${estacao.tipo}:${antiga}:${formatarMedicao(estacao)}`;
+  let etiqueta = iconeEstacaoCache.get(chave);
+  if (!etiqueta) {
+    etiqueta = document.createElement('span');
+    etiqueta.className = `etiqueta-estacao ${estacao.tipo}${antiga ? ' leitura-antiga' : ''}`;
+    const tipo = document.createElement('b');
+    tipo.textContent = estacao.tipo === 'chuva' ? 'CHUVA' : 'RIO';
+    const valor = document.createElement('span');
+    valor.textContent = formatarMedicao(estacao);
+    etiqueta.append(tipo, valor);
+    iconeEstacaoCache.set(chave, etiqueta);
+  }
+  return etiqueta.cloneNode(true) as HTMLSpanElement;
+}
+
+// Limita cache de ícones
+function limitarCacheEstacoes() {
+  if (iconeEstacaoCache.size > 100) {
+    const primeiras = Array.from(iconeEstacaoCache.keys()).slice(0, 50);
+    primeiras.forEach((k) => iconeEstacaoCache.delete(k));
+  }
+}
+
 export default function CamadasAmbientaisMapa({
   mapa,
   configuracao,
@@ -65,18 +93,23 @@ export default function CamadasAmbientaisMapa({
     new Map<string, FeatureCollection<Geometry, Propriedades>>(),
   );
   const layer = useRef<Leaflet.GeoJSON | null>(null);
+  const estacoesLayer = useRef<Leaflet.LayerGroup | null>(null);
+  const marcadoresEstacoes = useRef(new Map<string, Leaflet.Marker>());
   const planejar = useRef(aoPlanejar);
   planejar.current = aoPlanejar;
   const atualizarAreas = useRef(aoAtualizarAreas);
   atualizarAreas.current = aoAtualizarAreas;
-  const [agora, setAgora] = useState(0);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
   const [tentativa, setTentativa] = useState(0);
-  useEffect(() => {
-    const relogio = setInterval(() => setAgora(Date.now()), 60000);
-    return () => clearInterval(relogio);
-  }, []);
+
+  // Memoiza as estações para detectar mudanças reais (não apenas mudança de tempo)
+  const estacoesKey = useMemo(
+    () => estacoes.map((e) => `${e.id}:${e.leitura}:${e.valor}`).join('|'),
+    [estacoes],
+  );
+
+  // Efeito para marcadores de estações - só recria se dados mudaram (não a cada minuto)
   useEffect(() => {
     let cancelado = false;
     let grupo: Leaflet.LayerGroup | undefined;
@@ -85,64 +118,133 @@ export default function CamadasAmbientaisMapa({
       if (!mapa.getPane('ambiente'))
         mapa.createPane('ambiente').style.zIndex = '450';
       grupo = L.layerGroup().addTo(mapa);
-      for (const estacao of estacoes) {
-        const antiga = leituraAntiga(estacao);
-        const etiqueta = document.createElement('span');
-        etiqueta.className = `etiqueta-estacao ${estacao.tipo}${antiga ? ' leitura-antiga' : ''}`;
-        const tipo = document.createElement('b');
-        tipo.textContent = estacao.tipo === 'chuva' ? 'CHUVA' : 'RIO';
-        const valor = document.createElement('span');
-        valor.textContent = formatarMedicao(estacao);
-        etiqueta.append(tipo, valor);
-        const titulo = `${estacao.nome}. ${formatarMedicao(estacao)}. Leitura: ${estacao.leitura}${antiga ? '. Leitura antiga ou horário não validado.' : ''}`;
-        const marcador = L.marker([estacao.latitude, estacao.longitude], {
-          pane: 'ambiente',
-          title: titulo,
-          alt: titulo,
-          icon: L.divIcon({
-            className: 'marcador-estacao',
-            html: etiqueta,
-            iconSize: [116, 40],
-            iconAnchor: [58, 40],
-          }),
-        });
-        const popup = document.createElement('div');
-        popup.className = 'popup-estacao';
-        const nome = document.createElement('strong');
-        nome.textContent = estacao.nome;
-        const medida = document.createElement('p');
-        medida.textContent = `${estacao.tipo === 'chuva' ? 'Chuva acumulada em 24h' : 'Nível na régua da estação'}: ${formatarMedicao(estacao)}`;
-        const quando = document.createElement('p');
-        quando.textContent = `Leitura informada: ${estacao.leitura}.`;
-        popup.append(nome, medida, quando);
-        if (estacao.rio) {
-          const rio = document.createElement('p');
-          rio.textContent = `Rio: ${estacao.rio}`;
-          popup.append(rio);
+      estacoesLayer.current = grupo;
+
+      const marcadoresAtuais = marcadoresEstacoes.current;
+      const idsExistentes = new Set(marcadoresAtuais.keys());
+      const idsNovos = new Set(estacoes.map((e) => e.id));
+
+      // Remove marcadores obsoletos
+      for (const id of idsExistentes) {
+        if (!idsNovos.has(id)) {
+          const marcador = marcadoresAtuais.get(id);
+          if (marcador) {
+            grupo.removeLayer(marcador);
+            marcadoresAtuais.delete(id);
+          }
         }
-        if (antiga) {
-          const aviso = document.createElement('p');
-          aviso.className = 'alerta-leitura';
-          aviso.textContent =
-            'Leitura há mais de 3h ou horário não validado. Confirme a atualização na fonte.';
-          popup.append(aviso);
-        }
-        const fonte = document.createElement('a');
-        fonte.href = FONTES_AMBIENTAIS[estacao.tipo];
-        fonte.target = '_blank';
-        fonte.rel = 'noopener noreferrer';
-        fonte.textContent = 'Fonte: APAC / SIRH';
-        popup.append(fonte);
-        marcador
-          .bindPopup(popup, { maxWidth: 280, className: 'popup-ambiental' })
-          .addTo(grupo!);
       }
+
+      // Adiciona/atualiza marcadores
+      for (const estacao of estacoes) {
+        if (cancelado) break;
+        const id = estacao.id;
+        let marcador = marcadoresAtuais.get(id);
+        const antiga = leituraAntiga(estacao);
+        const etiqueta = obterIconeEstacao(estacao);
+        const titulo = `${estacao.nome}. ${formatarMedicao(estacao)}. Leitura: ${estacao.leitura}${antiga ? '. Leitura antiga ou horário não validado.' : ''}`;
+
+        if (marcador) {
+          // Atualiza marcador existente
+          const elemento = marcador.getElement();
+          if (elemento) {
+            elemento.title = titulo;
+            // Atualiza ícone se necessário
+            const iconeAtual = marcador.options.icon as Leaflet.DivIcon & { html?: HTMLElement };
+            if (iconeAtual?.html !== etiqueta) {
+              marcador.setIcon(
+                L.divIcon({
+                  className: 'marcador-estacao',
+                  html: etiqueta,
+                  iconSize: [116, 40],
+                  iconAnchor: [58, 40],
+                }),
+              );
+            }
+          }
+          // Atualiza popup
+          const popup = marcador.getPopup();
+          if (popup) {
+            const conteudo = popup.getContent() as HTMLElement;
+            if (conteudo) {
+              const valorEl = conteudo.querySelector('p');
+              if (valorEl) {
+                valorEl.textContent = `${estacao.tipo === 'chuva' ? 'Chuva acumulada em 24h' : 'Nível na régua da estação'}: ${formatarMedicao(estacao)}`;
+              }
+              const quandoEl = conteudo.querySelector('p:nth-child(3)');
+              if (quandoEl) {
+                quandoEl.textContent = `Leitura informada: ${estacao.leitura}.`;
+              }
+              const avisoEl = conteudo.querySelector('.alerta-leitura');
+              if (antiga && !avisoEl) {
+                const aviso = document.createElement('p');
+                aviso.className = 'alerta-leitura';
+                aviso.textContent =
+                  'Leitura há mais de 3h ou horário não validado. Confirme a atualização na fonte.';
+                conteudo.append(aviso);
+              } else if (!antiga && avisoEl) {
+                avisoEl.remove();
+              }
+            }
+          }
+        } else {
+          // Cria novo marcador
+          marcador = L.marker([estacao.latitude, estacao.longitude], {
+            pane: 'ambiente',
+            title: titulo,
+            alt: titulo,
+            icon: L.divIcon({
+              className: 'marcador-estacao',
+              html: etiqueta,
+              iconSize: [116, 40],
+              iconAnchor: [58, 40],
+            }),
+          });
+
+          const popup = document.createElement('div');
+          popup.className = 'popup-estacao';
+          const nome = document.createElement('strong');
+          nome.textContent = estacao.nome;
+          const medida = document.createElement('p');
+          medida.textContent = `${estacao.tipo === 'chuva' ? 'Chuva acumulada em 24h' : 'Nível na régua da estação'}: ${formatarMedicao(estacao)}`;
+          const quando = document.createElement('p');
+          quando.textContent = `Leitura informada: ${estacao.leitura}.`;
+          popup.append(nome, medida, quando);
+          if (estacao.rio) {
+            const rio = document.createElement('p');
+            rio.textContent = `Rio: ${estacao.rio}`;
+            popup.append(rio);
+          }
+          if (antiga) {
+            const aviso = document.createElement('p');
+            aviso.className = 'alerta-leitura';
+            aviso.textContent =
+              'Leitura há mais de 3h ou horário não validado. Confirme a atualização na fonte.';
+            popup.append(aviso);
+          }
+          const fonte = document.createElement('a');
+          fonte.href = FONTES_AMBIENTAIS[estacao.tipo];
+          fonte.target = '_blank';
+          fonte.rel = 'noopener noreferrer';
+          fonte.textContent = 'Fonte: APAC / SIRH';
+          popup.append(fonte);
+
+          marcador
+            .bindPopup(popup, { maxWidth: 280, className: 'popup-ambiental' })
+            .addTo(grupo);
+          marcadoresAtuais.set(id, marcador);
+        }
+      }
+
+      limitarCacheEstacoes();
     });
     return () => {
       cancelado = true;
       grupo?.remove();
+      estacoesLayer.current = null;
+      marcadoresEstacoes.current.clear();
     };
-  }, [mapa, estacoes, agora]);
+  }, [mapa, estacoesKey]); // Usa estacoesKey em vez de estacoes + agora
 
   useEffect(() => {
     setErro('');

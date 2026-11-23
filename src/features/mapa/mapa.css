@@ -720,6 +720,7 @@
   padding: 18px 18px 16px;
   border: 1px solid var(--borda);
   border-radius: 12px;
+  background: #fff;
   box-shadow: 0 8px 28px #102e5030;
   animation: abrir-familia 0.2s ease-out;
 }
@@ -946,6 +947,10 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 12px;
   padding: 9px 12px;
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(16, 46, 80, 0.15);
   color: var(--texto);
 }
 :where(.modulo-mapa) .leaflet-interactive:focus-visible,
@@ -1223,6 +1228,22 @@
   border-color: #ffffff70;
   border-top-color: #fff;
 }
+:where(.modulo-mapa) .botao-secundario {
+  color: var(--azul);
+  background: #fff;
+  border-color: var(--azul);
+}
+:where(.modulo-mapa) .botao-secundario:hover:not(:disabled) {
+  color: #fff;
+  background: var(--azul);
+  border-color: var(--azul);
+}
+:where(.modulo-mapa) .rodape-detalhes {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: flex-end;
+}
 :where(.modulo-mapa) .botao-icone {
   width: 44px;
   height: 44px;
@@ -1378,14 +1399,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 200px;
 }
 :where(.modulo-mapa) .filtro-bairro > span {
   font-size: 10px;
   color: var(--secundario);
 }
 :where(.modulo-mapa) .filtro-bairro select {
+  flex: 1;
   min-height: 44px;
-  min-width: 180px;
+  min-width: 0;
   padding: 9px 11px;
   border: 1px solid #cad6e4;
   border-radius: 7px;
@@ -1395,22 +1419,33 @@
 :where(.modulo-mapa) .acoes-filtros {
   display: flex;
   align-items: center;
-  margin-left: auto;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 :where(.modulo-mapa) .botao-exportar {
-  background: #10b981;
+  min-height: 44px;
+  padding: 9px 15px;
   color: #fff;
-  border-color: #10b981;
+  background: #10B981;
+  border-color: #10B981;
+  box-shadow: 0 3px 7px #10b98119;
+  font-size: 12px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 :where(.modulo-mapa) .botao-exportar:hover:not(:disabled) {
   background: #059669;
   border-color: #059669;
-  color: #fff;
 }
 :where(.modulo-mapa) .botao-exportar:disabled {
   opacity: 0.48;
   cursor: not-allowed;
+}
+:where(.modulo-mapa) .botao-exportar:focus-visible {
+  outline: 3px solid #f4bb24;
+  outline-offset: 3px;
 }
 :where(.modulo-mapa) .filtros-familias output {
   color: var(--secundario);
@@ -2269,6 +2304,14 @@
   :where(.modulo-mapa) .filtro-nivel select {
     flex: 1;
     min-width: 0;
+  }
+  :where(.modulo-mapa) .filtro-bairro {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+  :where(.modulo-mapa) .botao-exportar {
+    width: 100%;
+    justify-content: center;
   }
   :where(.modulo-mapa) .filtros-familias output {
     font-size: 10px;

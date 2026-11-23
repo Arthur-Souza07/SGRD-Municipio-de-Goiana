@@ -1,20 +1,26 @@
 import {
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useRef,
   useState,
   type FormEvent,
 } from 'react';
-import { Check, FlaskConical, LocateFixed, MapPin, Save } from 'lucide-react';
+import { FlaskConical, Save, Plus } from 'lucide-react';
 import PainelDialogo from './painel-dialogo';
-import CamposFamiliares from './campos-familiares';
-import { hojeCivil, type Familiar } from '@/features/mapa/lib/integrantes';
-import { dentroDeGoiana } from '@/features/mapa/lib/territorio';
+import SecaoInformacaoImovel from './SecaoInformacaoImovel';
+import SecaoCaracterizacaoImovel from './SecaoCaracterizacaoImovel';
+import SecaoCondicoesHabitabilidade from './SecaoCondicoesHabitabilidade';
+import SecaoHistoricoOcorrencias from './SecaoHistoricoOcorrencias';
+import SecaoInterdictioes from './SecaoInterdictioes';
+import SecaoDesalojamentos from './SecaoDesalojamentos';
+import SecaoBeneficiosAuxilios from './SecaoBeneficiosAuxilios';
+import SecaoEncaminhamentoHabitacional from './SecaoEncaminhamentoHabitacional';
+import SecaoVistorias from './SecaoVistorias';
+import SecaoSituacaoAtual from './SecaoSituacaoAtual';
+import SecaoDocumentosFotograficos from './SecaoDocumentosFotograficos';
+import CamposPessoaCompleta from './CamposPessoaCompleta';
 import {
   ESTILOS_RISCO,
-  coordenadasValidas,
   type NivelRisco,
 } from '@/features/mapa/lib/pontos';
 import {
@@ -23,17 +29,27 @@ import {
   exemploCadastro,
   formatarCpf,
   gerarIdentificador,
-  lerCoordenada,
   prepararCadastro,
   validarCadastro,
   type CamposCadastro,
   type DadosFamilia,
   type ErrosCadastro,
-  type LocalizacaoFamilia,
   type TipoOcorrencia,
+  type InformacaoImovel,
+  type CaracterizacaoImovel,
+  type CondicoesHabitabilidade,
+  type HistoricoOcorrencia,
+  type Interdicao,
+  type DesalojamentoDesabrigo,
+  type BeneficioAuxilio,
+  type EncaminhamentoHabitacional,
+  type HistoricoVistorias,
+  type SituacaoAtual,
+  type DocumentosFotograficos,
+  type ChefeFamilia,
+  type Conjuge,
+  type MembroFamilia,
 } from '@/features/mapa/lib/familias';
-
-const SeletorLocalizacao = lazy(() => import('./seletor-localizacao'));
 
 export default function FormularioFamilia({
   aberto,
@@ -48,16 +64,10 @@ export default function FormularioFamilia({
 }) {
   const [campos, setCampos] = useState<CamposCadastro>({ ...FORMULARIO_VAZIO });
   const [erros, setErros] = useState<ErrosCadastro>({});
-  const [modo, setModo] = useState<'gps' | 'mapa' | 'coordenadas'>('gps');
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
-  const [gps, setGps] = useState(false);
-  const [erroGps, setErroGps] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState('');
   const [consentimentoDemo, setConsentimentoDemo] = useState(false);
   const enviandoRef = useRef(false);
-  const gpsTentativa = useRef(0);
   const chave = useRef('');
   const formulario = useRef<HTMLFormElement>(null);
   useEffect(
@@ -70,7 +80,6 @@ export default function FormularioFamilia({
   useEffect(() => {
     if (!aberto) {
       // Dialog closed: just stop GPS indicator, don't cancel in-flight request
-      setGps(false);
     }
   }, [aberto]);
   const alterar = <K extends keyof CamposCadastro>(
@@ -88,80 +97,7 @@ export default function FormularioFamilia({
     setErroEnvio('');
     chave.current = '';
   };
-  const selecionarLocal = useCallback((local: LocalizacaoFamilia) => {
-    if (enviandoRef.current) return;
-    setCampos((anterior) => ({ ...anterior, localizacao: local }));
-    setLatitude(String(local.latitude));
-    setLongitude(String(local.longitude));
-    setErros((anterior) => ({
-      ...anterior,
-      localizacao: dentroDeGoiana(local.longitude, local.latitude)
-        ? undefined
-        : 'O ponto está fora de Goiana–PE. Confira a localização da residência.',
-    }));
-    setErroGps('');
-    chave.current = '';
-  }, []);
-  function atualizarFamiliares(pessoas: Familiar[]) {
-    alterar('familiares', pessoas);
-    setCampos((anterior) => {
-      const moradoresAtuais = Number(anterior.moradores);
-      if (pessoas.length + 1 > moradoresAtuais) {
-        return { ...anterior, moradores: String(pessoas.length + 1) };
-      }
-      return anterior;
-    });
-  }
-  function capturarGps() {
-    setModo('gps');
-    setErroGps('');
-    if (!window.isSecureContext || !navigator.geolocation) {
-      setErroGps(
-        'GPS indisponível neste navegador. Marque a residência no mapa ou informe as coordenadas.',
-      );
-      return;
-    }
-    const tentativa = ++gpsTentativa.current;
-    setGps(true);
-    navigator.geolocation.getCurrentPosition(
-      (posicao) => {
-        if (tentativa !== gpsTentativa.current) return;
-        setGps(false);
-        if (
-          !coordenadasValidas(posicao.coords.latitude, posicao.coords.longitude)
-        ) {
-          setErroGps(
-            'O aparelho retornou uma posição inválida. Tente novamente.',
-          );
-          return;
-        }
-        selecionarLocal({
-          latitude: posicao.coords.latitude,
-          longitude: posicao.coords.longitude,
-          origem: 'gps',
-          precisaoMetros: posicao.coords.accuracy,
-        });
-      },
-      (erro) => {
-        if (tentativa !== gpsTentativa.current) return;
-        setGps(false);
-        setErroGps(
-          erro.code === 1
-            ? 'Permissão de localização negada. Você pode marcar a residência no mapa.'
-            : erro.code === 3
-              ? 'A localização demorou para responder. Tente novamente ou marque no mapa.'
-              : 'Não foi possível obter o GPS. Tente ao ar livre ou marque a residência no mapa.',
-        );
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-    );
-  }
-  function trocarModo(proximo: typeof modo) {
-    // Mode switch: just stop GPS indicator, don't cancel in-flight request
-    setGps(false);
-    setModo(proximo);
-    setErroGps('');
-  }
+
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
     if (enviandoRef.current) return;
@@ -190,11 +126,8 @@ export default function FormularioFamilia({
       if (!chave.current) chave.current = gerarIdentificador();
       await aoSalvar(prepararCadastro(campos), chave.current);
       setCampos({ ...FORMULARIO_VAZIO });
-      setLatitude('');
-      setLongitude('');
       setConsentimentoDemo(false);
       chave.current = '';
-      setModo('gps');
       aoFechar();
     } catch (erro) {
       setErroEnvio(
@@ -217,13 +150,100 @@ export default function FormularioFamilia({
     'aria-invalid': !!erros[campo],
     'aria-describedby': erros[campo] ? `erro-${campo}` : undefined,
   });
+
+  // Handlers para as novas seções
+  const alterarInformacaoImovel = useCallback((dados: InformacaoImovel) => {
+    alterar('informacaoImovel', dados);
+  }, []);
+
+  const alterarCaracterizacaoImovel = useCallback((dados: CaracterizacaoImovel) => {
+    alterar('caracterizacaoImovel', dados);
+  }, []);
+
+  const alterarCondicoesHabitabilidade = useCallback((dados: CondicoesHabitabilidade) => {
+    alterar('condicoesHabitabilidade', dados);
+  }, []);
+
+  const alterarChefeFamilia = useCallback((dados: ChefeFamilia) => {
+    alterar('chefeFamilia', dados);
+  }, []);
+
+  const alterarConjuge = useCallback((dados: Conjuge) => {
+    alterar('conjuge', dados);
+  }, []);
+
+  const alterarDemaisMembros = useCallback((dados: MembroFamilia[]) => {
+    alterar('demaisMembros', dados);
+  }, []);
+
+  const alterarHistoricoOcorrencias = useCallback((dados: HistoricoOcorrencia[]) => {
+    alterar('historicoOcorrencias', dados);
+  }, []);
+
+  const alterarInterdictioes = useCallback((dados: Interdicao[]) => {
+    alterar('interdictioes', dados);
+  }, []);
+
+  const alterarDesalojamentos = useCallback((dados: DesalojamentoDesabrigo[]) => {
+    alterar('desalojamentos', dados);
+  }, []);
+
+  const alterarBeneficiosAuxilios = useCallback((dados: BeneficioAuxilio[]) => {
+    alterar('beneficiosAuxilios', dados);
+  }, []);
+
+  const alterarEncaminhamentoHabitacional = useCallback((dados: EncaminhamentoHabitacional) => {
+    alterar('encaminhamentoHabitacional', dados);
+  }, []);
+
+  const alterarHistoricoVistorias = useCallback((dados: HistoricoVistorias) => {
+    alterar('historicoVistorias', dados);
+  }, []);
+
+  const alterarSituacaoAtual = useCallback((dados: SituacaoAtual) => {
+    alterar('situacaoAtual', dados);
+  }, []);
+
+  const alterarDocumentosFotograficos = useCallback((dados: DocumentosFotograficos) => {
+    alterar('documentosFotograficos', dados);
+  }, []);
+
+  // Handlers para Chefe, Cônjuge e Demais Membros
+  const handleChefeChange = useCallback((dados: ChefeFamilia) => {
+    alterarChefeFamilia(dados);
+    // Sync basic fields for backward compatibility
+    if (dados.nome) alterar('nomeRepresentante', dados.nome);
+    if (dados.cpf) alterar('cpf', formatarCpf(dados.cpf));
+    if (dados.telefone) alterar('telefone', dados.telefone);
+    if (dados.dataNascimento) alterar('nascimentoRepresentante', dados.dataNascimento);
+    if (dados.observacao) alterar('apoioRepresentante', dados.observacao);
+  }, [alterarChefeFamilia, alterar]);
+
+  const handleConjugeChange = useCallback((dados: Conjuge) => {
+    alterarConjuge(dados);
+  }, [alterarConjuge]);
+
+  const handleDemaisMembrosChange = useCallback((dados: MembroFamilia[]) => {
+    alterarDemaisMembros(dados);
+    // Also update the old familiares array for backward compatibility
+    const familiares = dados.map((m) => ({
+      id: m.id || gerarIdentificador(),
+      nomeCompleto: m.nome,
+      parentesco: m.vinculoSocialParentesco,
+      dataNascimento: m.dataNascimento || '',
+      cpf: m.cpf || '',
+      apoio: m.observacao || '',
+    }));
+    alterar('familiares', familiares);
+  }, [alterarDemaisMembros, alterar]);
+
   return (
     <PainelDialogo
       id="cadastro"
       aberto={aberto}
       aoFechar={aoFechar}
       titulo="Cadastrar família"
-      subtitulo="Identifique a família, seus integrantes e a residência."
+      subtitulo="Identifique a família, seus integrantes e a residência. Preencha todas as seções conforme o modelo oficial."
       ocupado={enviando}
       rodape={(fechar) => (
         <>
@@ -240,7 +260,7 @@ export default function FormularioFamilia({
               className="botao-primario"
               type="submit"
               form="formulario-familia"
-              disabled={enviando || gps}
+              disabled={enviando}
             >
               {enviando ? <span className="spinner" /> : <Save size={16} />}{' '}
               {enviando
@@ -273,16 +293,10 @@ export default function FormularioFamilia({
                 type="button"
                 disabled={enviando}
                 onClick={() => {
-                  // Example data load: just stop GPS indicator, don't cancel in-flight request
-                  setGps(false);
                   const exemplo = exemploCadastro();
                   setCampos(exemplo);
-                  setLatitude(String(exemplo.localizacao!.latitude));
-                  setLongitude(String(exemplo.localizacao!.longitude));
-                  setModo('mapa');
                   setErros({});
                   setErroEnvio('');
-                  setErroGps('');
                   setConsentimentoDemo(true);
                   chave.current = '';
                 }}
@@ -298,326 +312,184 @@ export default function FormularioFamilia({
             enviado.
           </p>
         )}
+
+        {/* Seção 1: Informação do Imóvel */}
+        <SecaoInformacaoImovel
+          dados={campos.informacaoImovel}
+          aoAlterar={alterarInformacaoImovel}
+          erros={erros.informacaoImovel as any}
+          apenasLeitura={enviando}
+        />
+
+        {/* Seção 2: Caracterização do Imóvel */}
+        <SecaoCaracterizacaoImovel
+          dados={campos.caracterizacaoImovel}
+          aoAlterar={alterarCaracterizacaoImovel}
+          erros={erros.caracterizacaoImovel as any}
+          apenasLeitura={enviando}
+        />
+
+        {/* Seção 3: Condições de Habitabilidade */}
+        <SecaoCondicoesHabitabilidade
+          dados={campos.condicoesHabitabilidade}
+          aoAlterar={alterarCondicoesHabitabilidade}
+          erros={erros.condicoesHabitabilidade as any}
+          apenasLeitura={enviando}
+        />
+
+        {/* Seção 4: Responsável pelo Imóvel e Composição Familiar */}
         <fieldset disabled={enviando}>
           <legend>
-            <span>1</span>Representante da família
+            <span>4</span>Responsável pelo Imóvel e Composição Familiar
           </legend>
-          <p className="ajuda-secao">Os campos com * são obrigatórios.</p>
-          <label className="campo">
-            Nome do representante *
-            <input
-              name="nomeRepresentante"
-              autoComplete="off"
-              maxLength={120}
-              value={campos.nomeRepresentante}
-              onChange={(e) => alterar('nomeRepresentante', e.target.value)}
-              {...propsCampo('nomeRepresentante')}
-            />
-            {ajuda('nomeRepresentante')}
-          </label>
-          <div className="grade-campos">
-            <label className="campo">
-              CPF *
-              <input
-                name="cpf"
-                inputMode="numeric"
-                autoComplete="off"
-                placeholder="000.000.000-00"
-                maxLength={14}
-                value={campos.cpf}
-                onChange={(e) => alterar('cpf', formatarCpf(e.target.value))}
-                {...propsCampo('cpf')}
-              />
-              {ajuda('cpf')}
-            </label>
-            <label className="campo">
-              Telefone com DDD <span className="opcional">(opcional)</span>
-              <input
-                name="telefone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="off"
-                maxLength={20}
-                placeholder="(81) 90000-0000"
-                value={campos.telefone}
-                onChange={(e) => alterar('telefone', e.target.value)}
-                {...propsCampo('telefone')}
-              />
-              {ajuda('telefone')}
-            </label>
-          </div>
-          <label className="campo">
-            Data de nascimento do representante{' '}
-            <span className="opcional">(opcional)</span>
-            <input
-              name="nascimentoRepresentante"
-              type="date"
-              max={hojeCivil()}
-              value={campos.nascimentoRepresentante || ''}
-              onChange={(e) =>
-                alterar('nascimentoRepresentante', e.target.value)
-              }
-              {...propsCampo('nascimentoRepresentante')}
-            />
-            {ajuda('nascimentoRepresentante')}
-          </label>
-          <label className="campo">
-            Apoio para atendimento / evacuação{' '}
-            <span className="opcional">(opcional)</span>
-            <textarea
-              name="apoioRepresentante"
-              rows={2}
-              maxLength={300}
-              value={campos.apoioRepresentante || ''}
-              onChange={(e) => alterar('apoioRepresentante', e.target.value)}
-              placeholder="Ex.: precisa de acompanhamento para sair da residência."
-              {...propsCampo('apoioRepresentante')}
-            />
-            {ajuda('apoioRepresentante')}
-          </label>
-          <label className="campo campo-curto">
-            Pessoas na residência *
-            <input
-              name="moradores"
-              type="number"
-              min="1"
-              max="99"
-              inputMode="numeric"
-              value={campos.moradores}
-              onChange={(e) => alterar('moradores', e.target.value)}
-              {...propsCampo('moradores')}
-            />
-            {ajuda('moradores')}
-          </label>
-        </fieldset>
-        <fieldset disabled={enviando}>
-          <legend>
-            <span>2</span>Demais integrantes da família
-          </legend>
-          <CamposFamiliares
-            familiares={campos.familiares || []}
-            moradores={Number(campos.moradores)}
-            aoAlterar={atualizarFamiliares}
-            erro={erros.familiares}
-            cpfRepresentante={campos.cpf}
-          />
-        </fieldset>
-        <fieldset disabled={enviando}>
-          <legend>
-            <span>3</span>Endereço e localização
-          </legend>
-          <div className="grade-campos endereco">
-            <label className="campo">
-              Rua ou acesso *
-              <input
-                name="logradouro"
-                maxLength={160}
-                value={campos.logradouro}
-                onChange={(e) => alterar('logradouro', e.target.value)}
-                {...propsCampo('logradouro')}
-              />
-              {ajuda('logradouro')}
-            </label>
-            <label className="campo">
-              Número *
-              <input
-                name="numero"
-                maxLength={20}
-                placeholder="ou S/N"
-                value={campos.numero}
-                onChange={(e) => alterar('numero', e.target.value)}
-                {...propsCampo('numero')}
-              />
-              {ajuda('numero')}
-            </label>
-          </div>
-          <label className="campo">
-            Bairro ou comunidade *
-            <input
-              name="bairro"
-              maxLength={100}
-              value={campos.bairro}
-              onChange={(e) => alterar('bairro', e.target.value)}
-              {...propsCampo('bairro')}
-            />
-            {ajuda('bairro')}
-          </label>
-          <label className="campo">
-            Complemento <span className="opcional">(opcional)</span>
-            <input
-              name="complemento"
-              maxLength={160}
-              value={campos.complemento}
-              onChange={(e) => alterar('complemento', e.target.value)}
-              {...propsCampo('complemento')}
-            />
-            {ajuda('complemento')}
-          </label>
-          <p className="municipio-formulario">
-            <MapPin size={14} /> Goiana · Pernambuco
+          <p className="ajuda-secao">
+            Dados completos do chefe da família, cônjuge e demais membros.
           </p>
-          <div
-            className="localizacao-cadastro"
-            id="localizacao-cadastro"
-            tabIndex={-1}
-            {...propsCampo('localizacao')}
-          >
-            <strong>Onde fica a residência? *</strong>
-            <p>
-              Use o GPS somente quando estiver na residência. O contorno
-              tracejado mostra Goiana; cadastros fora do limite municipal são
-              bloqueados.
+
+          {/* Chefe da Família (Representante) */}
+          <CamposPessoaCompleta
+            titulo="Chefe da Família (Representante)"
+            pessoa={campos.chefeFamilia}
+            aoAlterar={handleChefeChange}
+            erros={erros.chefeFamilia as any}
+            apenasLeitura={enviando}
+          />
+
+          {/* Cônjuge */}
+          <CamposPessoaCompleta
+            titulo="Cônjuge / Companheiro(a)"
+            pessoa={campos.conjuge}
+            aoAlterar={handleConjugeChange}
+            erros={erros.conjuge as any}
+            apenasLeitura={enviando}
+          />
+
+          {/* Demais Membros */}
+          <div className="secao-demais-membros">
+            <h4>Demais Membros da Composição Familiar</h4>
+            <p className="ajuda-secao">
+              Inclua filhos, pais, avós, netos, irmãos ou outros que residem no imóvel.
+              Máximo de 8 membros adicionais.
             </p>
-            <div
-              className="modos-localizacao"
-              role="group"
-              aria-label="Como localizar a residência"
-            >
+            {campos.demaisMembros?.map((membro, idx) => (
+              <CamposPessoaCompleta
+                key={membro.id || idx}
+                titulo="Membro"
+                indice={idx}
+                pessoa={membro}
+                aoAlterar={(dados) => {
+                  const novos = [...(campos.demaisMembros || [])];
+                  novos[idx] = dados as MembroFamilia;
+                  handleDemaisMembrosChange(novos);
+                }}
+                erros={erros.demaisMembros as any}
+                mostrarVinculo={true}
+                aoRemover={() => {
+                  const novos = (campos.demaisMembros || []).filter((_, i) => i !== idx);
+                  handleDemaisMembrosChange(novos);
+                }}
+                apenasLeitura={enviando}
+              />
+            ))}
+            {(campos.demaisMembros?.length || 0) < 8 && !enviando && (
               <button
                 type="button"
-                aria-pressed={modo === 'gps'}
-                onClick={capturarGps}
-                disabled={gps}
-              >
-                <LocateFixed size={15} />
-                {gps ? 'Buscando GPS…' : 'Usar GPS'}
-              </button>
-              <button
-                type="button"
-                aria-pressed={modo === 'mapa'}
-                onClick={() => trocarModo('mapa')}
-              >
-                Marcar no mapa
-              </button>
-              <button
-                type="button"
-                aria-pressed={modo === 'coordenadas'}
-                onClick={() => trocarModo('coordenadas')}
-              >
-                Coordenadas
-              </button>
-            </div>
-            {erroGps && (
-              <p role="alert" className="erro-campo">
-                {erroGps}
-              </p>
-            )}
-            {modo === 'mapa' && aberto && (
-              <Suspense
-                fallback={<p role="status">Preparando mapa de localização…</p>}
-              >
-                <SeletorLocalizacao
-                  localizacao={campos.localizacao}
-                  aoSelecionar={selecionarLocal}
-                />
-              </Suspense>
-            )}
-            {modo === 'coordenadas' && (
-              <div className="coordenadas-manuais">
-                <div className="grade-campos">
-                  <label className="campo">
-                    Latitude
-                    <input
-                      name="latitude"
-                      inputMode="decimal"
-                      placeholder="-7.5606"
-                      value={latitude}
-                      onChange={(e) => {
-                        setLatitude(e.target.value);
-                        alterar('localizacao', null);
-                      }}
-                    />
-                  </label>
-                  <label className="campo">
-                    Longitude
-                    <input
-                      name="longitude"
-                      inputMode="decimal"
-                      placeholder="-35.0025"
-                      value={longitude}
-                      onChange={(e) => {
-                        setLongitude(e.target.value);
-                        alterar('localizacao', null);
-                      }}
-                    />
-                  </label>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const lat = lerCoordenada(latitude);
-                    const lng = lerCoordenada(longitude);
-                    if (
-                      lat === null ||
-                      lng === null ||
-                      !coordenadasValidas(lat, lng)
-                    ) {
-                      setErros((a) => ({
-                        ...a,
-                        localizacao:
-                          'Informe coordenadas válidas: latitude entre -90 e 90, longitude entre -180 e 180.',
-                      }));
-                      return;
-                    }
-                    selecionarLocal({
-                      latitude: lat,
-                      longitude: lng,
-                      origem: 'coordenadas',
-                    });
-                  }}
-                >
-                  Confirmar coordenadas
-                </button>
-              </div>
-            )}
-            {campos.localizacao && (
-              <output
-                className={`localizacao-confirmada${dentroDeGoiana(campos.localizacao.longitude, campos.localizacao.latitude) ? '' : ' fora-municipio'}`}
-                aria-live="polite"
-              >
-                <Check size={16} />
-                <span>
-                  {dentroDeGoiana(
-                    campos.localizacao.longitude,
-                    campos.localizacao.latitude,
-                  )
-                    ? 'Residência marcada em Goiana–PE'
-                    : 'Ponto fora de Goiana–PE'}{' '}
-                  <strong>
-                    {campos.localizacao.latitude.toFixed(6)},{' '}
-                    {campos.localizacao.longitude.toFixed(6)}
-                  </strong>
-                  {campos.localizacao.origem === 'gps' && (
-                    <small>
-                      Precisão aproximada:{' '}
-                      {Math.round(campos.localizacao.precisaoMetros || 0)} m.
-                      Confira o ponto antes de enviar.
-                    </small>
-                  )}
-                </span>
-              </output>
-            )}
-            {campos.localizacao && (
-              <button
-                type="button"
-                className="limpar-localizacao"
+                className="adicionar-familiar"
                 onClick={() => {
-                  // Clear location: just stop GPS indicator, don't cancel in-flight request
-                  setGps(false);
-                  alterar('localizacao', null);
-                  setLatitude('');
-                  setLongitude('');
+                  const novoMembro: MembroFamilia = {
+                    id: gerarIdentificador(),
+                    nome: '',
+                    apelidoNomeSocial: '',
+                    telefone: '',
+                    cpf: '',
+                    rg: '',
+                    dataNascimento: '',
+                    idade: undefined,
+                    estadoCivil: 'solteiro',
+                    nisPis: '',
+                    identidadeGenero: 'prefiro_nao_dizer',
+                    racaCor: 'nao_declarada',
+                    ocupacaoProfissional: '',
+                    rendaFamiliar: '',
+                    beneficiosSocioassistenciais: '',
+                    possuiDeficiencia: 'nao_informado',
+                    deficienciaQual: '',
+                    observacao: '',
+                    vinculoSocialParentesco: 'filho',
+                    cor: '',
+                  };
+                  handleDemaisMembrosChange([...(campos.demaisMembros || []), novoMembro]);
                 }}
               >
-                Limpar marcação
+                <Plus size={16} />
+                Adicionar membro
               </button>
             )}
-            {ajuda('localizacao')}
           </div>
         </fieldset>
+
+        {/* Seção 5: Histórico e Evolução */}
+        <SecaoHistoricoOcorrencias
+          dados={campos.historicoOcorrencias}
+          aoAlterar={alterarHistoricoOcorrencias}
+          erros={erros.historicoOcorrencias as any}
+          apenasLeitura={enviando}
+        />
+
+        <SecaoInterdictioes
+          dados={campos.interdictioes}
+          aoAlterar={alterarInterdictioes}
+          erros={erros.interdictioes as any}
+          apenasLeitura={enviando}
+        />
+
+        <SecaoDesalojamentos
+          dados={campos.desalojamentos}
+          aoAlterar={alterarDesalojamentos}
+          erros={erros.desalojamentos as any}
+          apenasLeitura={enviando}
+        />
+
+        <SecaoBeneficiosAuxilios
+          dados={campos.beneficiosAuxilios}
+          aoAlterar={alterarBeneficiosAuxilios}
+          erros={erros.beneficiosAuxilios as any}
+          apenasLeitura={enviando}
+        />
+
+        <SecaoEncaminhamentoHabitacional
+          dados={campos.encaminhamentoHabitacional}
+          aoAlterar={alterarEncaminhamentoHabitacional}
+          erros={erros.encaminhamentoHabitacional as any}
+          apenasLeitura={enviando}
+        />
+
+        <SecaoVistorias
+          dados={campos.historicoVistorias}
+          aoAlterar={alterarHistoricoVistorias}
+          erros={erros.historicoVistorias as any}
+          apenasLeitura={enviando}
+        />
+
+        <SecaoSituacaoAtual
+          dados={campos.situacaoAtual}
+          aoAlterar={alterarSituacaoAtual}
+          erros={erros.situacaoAtual as any}
+          apenasLeitura={enviando}
+        />
+
+        {/* Seção 6: Documentos e Registro Fotográfico */}
+        <SecaoDocumentosFotograficos
+          dados={campos.documentosFotograficos}
+          aoAlterar={alterarDocumentosFotograficos}
+          erros={erros.documentosFotograficos as any}
+          apenasLeitura={enviando}
+        />
+
+        {/* Seção 7: Vulnerabilidade informada (Classificação de Risco) */}
         <fieldset disabled={enviando}>
           <legend>
-            <span>4</span>Vulnerabilidade informada
+            <span>7</span>Vulnerabilidade informada (Classificação de Risco)
           </legend>
           <p className="ajuda-secao">
             Registre a avaliação da equipe. O sistema não calcula risco
@@ -674,7 +546,7 @@ export default function FormularioFamilia({
             {ajuda('tipoOcorrencia')}
           </label>
           <label className="campo">
-            Observações <span className="opcional">(opcional)</span>
+            Observações gerais <span className="opcional">(opcional)</span>
             <textarea
               name="observacoes"
               rows={3}
@@ -688,6 +560,7 @@ export default function FormularioFamilia({
             {ajuda('observacoes')}
           </label>
         </fieldset>
+
         {demonstracao && (
           <label className="confirmacao-demo">
             <input

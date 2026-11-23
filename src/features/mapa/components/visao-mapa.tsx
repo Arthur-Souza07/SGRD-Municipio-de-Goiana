@@ -15,20 +15,9 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  ClipboardList,
-  AlertTriangle,
-  CheckCircle2,
-  ChevronRight,
-  FlaskConical,
-  Info,
-  Map as MapIcon,
-  MapPin,
-  Plus,
-  Search,
-  ShieldCheck,
-  Users,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronRight, Download, FlaskConical, Info, MapPin, Plus, Search, ShieldCheck, Users } from 'lucide-react';
+import { Map as MapIcon } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 import {
   filtrarFamilias,
   normalizarBusca,
@@ -39,6 +28,7 @@ import FormularioFamilia from './formulario-familia';
 import DetalhesFamilia from './detalhes-familia';
 import ListaFamilias from './lista-familias';
 import PainelAmbiental from './painel-ambiental';
+import ModalHistoricoExportacao from './ModalHistoricoExportacao';
 import { useDadosAmbientais } from './use-dados-ambientais';
 import { useExportarExcel } from './use-exportar-excel';
 import type {
@@ -48,12 +38,13 @@ import type {
 import {
   carregarPontos,
   contarNiveis,
-  type NivelRisco,
-  type PontoRisco,
+  nomeDaFamilia,
 } from '@/features/mapa/lib/pontos';
 import {
   type CadastroFamilia,
   type DadosFamilia,
+  type NivelRisco,
+  type PontoRisco,
 } from '@/features/mapa/lib/familias';
 import { carregarDemonstracao } from '@/features/mapa/lib/demonstracao';
 
@@ -83,6 +74,7 @@ export default function VisaoMapa() {
   const [sucesso, setSucesso] = useState('');
   const [busca, setBusca] = useState('');
   const [nivel, setNivel] = useState<NivelRisco | ''>('');
+  const [bairroSelecionado, setBairroSelecionado] = useState<string>('Todos');
   const [chuvaAtiva, setChuvaAtiva] = useState(false);
   const [rioAtivo, setRioAtivo] = useState(false);
   const [revisaoAmbiente, setRevisaoAmbiente] = useState(0);
@@ -92,8 +84,7 @@ export default function VisaoMapa() {
     null,
   );
   const [areasDisponiveis, setAreasDisponiveis] = useState<AreaPlanejada[]>([]);
-  const [bairroSelecionado, setBairroSelecionado] = useState<string>('Todos');
-  const { exportar, bairrosDisponiveis } = useExportarExcel();
+  const [historicoAberto, setHistoricoAberto] = useState(false);
   const chuva = useDadosAmbientais('chuva', chuvaAtiva, revisaoAmbiente);
   const rio = useDadosAmbientais('rio', rioAtivo, revisaoAmbiente);
   const estacoes = useMemo(
@@ -115,6 +106,7 @@ export default function VisaoMapa() {
     [estacoes, camada, apenasAlta, areaPlanejada],
   );
   const buscaAdiada = useDeferredValue(busca);
+  const { bairrosDisponiveis, exportarMultiplas } = useExportarExcel({ endpoint: familiasApi });
   const pontos = useMemo(() => {
     const unicos = new Map<string, CadastroFamilia>(
       pontosOrigem.map((p) => [p.id, p]),
@@ -123,11 +115,14 @@ export default function VisaoMapa() {
     return [...unicos.values()];
   }, [pontosOrigem, cadastrosSessao]);
   const totais = useMemo(() => contarNiveis(pontos), [pontos]);
+  const bairros = useMemo(() => bairrosDisponiveis(pontos), [pontos]);
   const visiveis = useMemo(
     () => {
       let resultado = filtrarFamilias(pontos, buscaAdiada, nivel);
       if (bairroSelecionado !== 'Todos') {
-        resultado = resultado.filter((f) => f.dados?.bairro === bairroSelecionado);
+        resultado = resultado.filter((f) =>
+          normalizarBusca(f.dados?.bairro || 'Não informado') === normalizarBusca(bairroSelecionado)
+        );
       }
       return resultado;
     },
@@ -144,6 +139,7 @@ export default function VisaoMapa() {
     setSelecionada(null);
     setBusca('');
     setNivel('');
+    setBairroSelecionado('Todos');
     setFoco((anterior) => ({ ponto, revisao: (anterior?.revisao || 0) + 1 }));
   }, []);
   useEffect(() => {
@@ -278,7 +274,7 @@ export default function VisaoMapa() {
                   Ambiente demonstrativo
                 </strong>
                 <p>
-                  500 famílias fictícias na sede de Goiana. Pontos aproximados
+                  50 famílias fictícias na sede de Goiana. Pontos aproximados
                   em áreas suscetíveis, dentro do limite do IBGE.
                 </p>
               </div>
@@ -454,9 +450,9 @@ export default function VisaoMapa() {
                   onChange={(e) => setBairroSelecionado(e.target.value)}
                 >
                   <option value="Todos">Todos os bairros</option>
-                  {bairrosDisponiveis.map((bairro) => (
-                    <option key={bairro} value={bairro}>
-                      {bairro}
+                  {bairros.map((b) => (
+                    <option key={b.nome} value={b.nome}>
+                      {b.nome} ({b.contagem})
                     </option>
                   ))}
                 </select>
@@ -476,12 +472,23 @@ export default function VisaoMapa() {
               <div className="acoes-filtros">
                 <button
                   type="button"
-                  className="botao-exportar"
-                  onClick={() => exportar(visiveis, bairroSelecionado)}
+                  className="botao-exportar botao-primario"
+                  onClick={() => exportarMultiplas(visiveis)}
                   disabled={!visiveis.length}
                   aria-label="Exportar famílias filtradas para Excel"
                 >
-                  📊 Exportar Excel
+                  <Download size={16} />
+                  Exportar filtradas
+                </button>
+                <button
+                  type="button"
+                  className="botao-exportar"
+                  onClick={() => setHistoricoAberto(true)}
+                  disabled={!pontos.length}
+                  aria-label="Ver histórico de exportações"
+                >
+                  <Download size={16} />
+                  Histórico de Exportações
                 </button>
               </div>
               <output aria-live="polite">
@@ -498,11 +505,11 @@ export default function VisaoMapa() {
                 aoSelecionarFamilia={selecionarFamilia}
                 foco={foco}
                 ambiente={ambiente}
-                filtroAtivo={!!(buscaAdiada.trim() || nivel)}
+                filtroAtivo={!!(buscaAdiada.trim() || nivel || bairroSelecionado !== 'Todos')}
               />
             </div>
             <ListaFamilias
-              key={`${nivel}:${normalizarBusca(buscaAdiada)}`}
+              key={`${nivel}:${normalizarBusca(buscaAdiada)}:${bairroSelecionado}`}
               familias={visiveis}
               aoSelecionar={selecionarFamilia}
               aoLocalizar={localizar}
@@ -530,6 +537,15 @@ export default function VisaoMapa() {
           demonstracao={demonstracao}
           aoFechar={fecharDetalhes}
           aoLocalizar={localizar}
+        />
+        <ModalHistoricoExportacao
+          aberto={historicoAberto}
+          aoFechar={() => setHistoricoAberto(false)}
+          familias={pontos.map(p => ({
+            id: p.id,
+            nome: nomeDaFamilia(p),
+            dados: p.dados,
+          }))}
         />
       </div>
     </div>

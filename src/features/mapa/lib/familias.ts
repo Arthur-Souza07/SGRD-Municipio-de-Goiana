@@ -13,6 +13,8 @@ import {
   type PessoaDemonstrativa,
 } from './integrantes';
 import { dentroDeGoiana } from './territorio';
+// Lazy-loaded demo data - only imported when needed
+// import { exemploCadastro } from './exemplo-cadastro';
 
 export const TIPOS_OCORRENCIA = {
   nao_informado: 'Não informado',
@@ -23,13 +25,187 @@ export const TIPOS_OCORRENCIA = {
   outro: 'Outro',
 } as const;
 export type TipoOcorrencia = keyof typeof TIPOS_OCORRENCIA;
+
+// Re-exportar PontoRisco, NivelRisco e nomeDaFamilia para compatibilidade
+export type { PontoRisco, NivelRisco } from './pontos';
+export { nomeDaFamilia } from './pontos';
+
 export interface LocalizacaoFamilia {
   latitude: number;
   longitude: number;
   origem: 'gps' | 'mapa' | 'coordenadas';
   precisaoMetros?: number;
 }
+
+// ========== Tipos para o Template Excel (Ficha Cadastral) ==========
+
+// Seção 1: Informação do Imóvel
+export interface InformacaoImovel {
+  municipio?: string; // GOIANA / PE
+  dataCadastro?: string; // DD/MM/AAAA
+  dataUltimaAtualizacao?: string; // DD/MM/AAAA ou '-'
+  comunidade?: string;
+  endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  distrito?: string;
+  longitude?: string; // LONGITUDE (S)
+  latitude?: string; // LATITUDE (W)
+  tipoRisco?: string; // Ex: Inundação, Deslizamento
+  grauRisco?: string; // Alto, Médio, Baixo
+}
+
+// Seção 2: Caracterização do Imóvel
+export interface CaracterizacaoImovel {
+  usoImovel?: string; // Residencial, Comercial, Misto, Institucional
+  condicoesOcupacao?: 'proprio' | 'alugado' | 'cedido' | 'invasao' | 'outro';
+  valorAluguel?: string; // Se alugado
+  nomeLocador?: string; // Se alugado
+  imovelVerticalizado?: 'sim' | 'nao';
+  numeroPavimentos?: string; // Se sim
+  pavimentosOcupa?: string; // Se sim
+  areaTerreno?: string; // m²
+  areaConstrucao?: string; // m²
+  comodos?: Comodo[]; // Lista de cômodos
+}
+
+export interface Comodo {
+  nome: string;
+  quantidade: number;
+}
+
+// Seção 2.1: Quantidade de dependências
+export type ComodosResidenciais = {
+  quartos: number;
+  salas: number;
+  cozinhas: number;
+  banheiros: number;
+  areasServico: number;
+  garagens: number;
+  outros: Comodo[];
+};
+
+// Seção 3: Condições de Habitabilidade
+export interface CondicoesHabitabilidade {
+  tipoConstrucao?: 'alvenaria' | 'madeira' | 'mista' | 'taipa' | 'container' | 'outro';
+  padraoAcabamento?: 'alto' | 'medio' | 'baixo' | 'sem_acabamento';
+  tipoCoberta?: 'laje' | 'telha_ceramica' | 'telha_metalica' | 'telha_fibrocimento' | 'palha' | 'outro';
+  saneamentoBasico?: 'rede_coletora' | 'fossa_setica' | 'fossa_rudimentar' | 'valao' | 'inexistente';
+  abastecimentoAgua?: 'rede_publica' | 'poco_artesiano' | 'cisterna' | 'carro_pipa' | 'outro';
+  aguasPluviais?: 'rede_coletora' | 'valao' | 'superficial' | 'inexistente';
+  pavimentacao?: 'asfalto' | 'paralelepipedo' | 'bloquete' | 'terra' | 'outro';
+  iluminacaoPublica?: 'sim' | 'nao' | 'parcial';
+  coletaResiduos?: 'sim' | 'nao';
+}
+
+// Seção 4: Responsável pelo Imóvel e Composição Familiar
+export interface PessoaCompleta {
+  id?: string; // ID único para uso em listas React
+  nome: string;
+  apelidoNomeSocial?: string;
+  telefone?: string;
+  cpf?: string;
+  rg?: string;
+  dataNascimento?: string; // DD/MM/AAAA
+  idade?: number;
+  estadoCivil?: 'solteiro' | 'casado' | 'divorciado' | 'viuvo' | 'uniao_estavel' | 'outro';
+  nisPis?: string;
+  identidadeGenero?: 'masculino' | 'feminino' | 'transgenero' | 'nao_binario' | 'outro' | 'prefiro_nao_dizer';
+  racaCor?: 'branca' | 'preta' | 'parda' | 'amarela' | 'indigena' | 'nao_declarada';
+  ocupacaoProfissional?: string;
+  rendaFamiliar?: string; // Valor em reais
+  beneficiosSocioassistenciais?: string; // Lista de benefícios
+  possuiDeficiencia: 'sim' | 'nao' | 'nao_informado';
+  deficienciaQual?: string;
+  observacao?: string;
+}
+
+// Chefe da Família (Representante) - usa os mesmos campos de PessoaCompleta
+export type ChefeFamilia = PessoaCompleta;
+
+// Cônjuge - usa os mesmos campos de PessoaCompleta
+export type Conjuge = PessoaCompleta;
+
+// Demais Membros da Composição Familiar
+export interface MembroFamilia extends PessoaCompleta {
+  vinculoSocialParentesco: 'conjuge' | 'filho' | 'pai_mae' | 'avo' | 'neto' | 'irmao' | 'outro';
+  cor?: string; // Raça/cor específica do membro
+}
+
+// Seção 5: Histórico e Evolução dos Dados Familiares
+// 5.1 Histórico de Ocorrências
+export interface HistoricoOcorrencia {
+  jaFoiAtingido: 'sim' | 'nao' | 'nao_informado';
+  tipoOcorrencia?: string;
+  dataAnoOcorrencia?: string;
+  houveDanosEdificacao?: 'sim' | 'nao' | 'parcial' | 'nao_informado';
+  houvePerdaBens?: 'sim' | 'nao' | 'nao_informado';
+  houvePerdaTotalParcialImovel?: 'sim' | 'nao' | 'parcial' | 'total' | 'nao_informado';
+  observacao?: string;
+}
+
+// 5.2 Interdição e Medidas de Segurança
+export interface Interdicao {
+  imovelJaFoiInterditado: 'sim' | 'nao' | 'nao_informado';
+  tipo?: 'total' | 'parcial' | 'preventiva' | 'outro';
+  dataInterdicao?: string;
+  houveEvacuacaoDesocupacao?: 'sim' | 'nao' | 'nao_informado';
+  houveRecomendacaoRemocaoDefinitiva?: 'sim' | 'nao' | 'nao_informado';
+  observacao?: string;
+}
+
+// 5.3 Desalojamento e Desabrigo
+export interface DesalojamentoDesabrigo {
+  familiaJaFicouDesalojada: 'sim' | 'nao' | 'nao_informado';
+  familiaJaFicouDesabrigada: 'sim' | 'nao' | 'nao_informado';
+  periodo?: string;
+  localAcolhimento?: string;
+  retornouAoImovel?: 'sim' | 'nao' | 'nao_informado';
+}
+
+// 5.4 Benefícios e Auxílios
+export interface BeneficioAuxilio {
+  jaRecebeuBeneficioAuxilio: 'sim' | 'nao' | 'nao_informado';
+  tipoBeneficio?: string;
+  data?: string;
+  observacao?: string;
+}
+
+// 5.5 Encaminhamento Habitacional
+export interface EncaminhamentoHabitacional {
+  jaFoiEncaminhado: 'sim' | 'nao' | 'nao_informado';
+  data?: string;
+  observacao?: string;
+}
+
+// 5.6 Histórico de Vistorias
+export interface HistoricoVistorias {
+  jaFoiAtendidaAssistenciaSocial: 'sim' | 'nao' | 'nao_informado';
+  dataUltimaVistoriaAssistencia?: string;
+  assistenteSocialResponsavel?: string;
+  jaFoiRealizadaVistoriaTecnicaDefesaCivil: 'sim' | 'nao' | 'nao_informado';
+  dataUltimaVistoriaDefesaCivil?: string;
+  tecnicoResponsavel?: string;
+}
+
+// 5.6 Situação Atual
+export interface SituacaoAtual {
+  emAcompanhamentoDefesaCivil: 'sim' | 'nao' | 'nao_informado';
+  observacao?: string;
+}
+
+// Seção 6: Documentos e Registro Fotográfico
+export interface DocumentosFotograficos {
+  possuiDocumentos: 'sim' | 'nao' | 'parcial';
+  listaDocumentos?: string[]; // RG, CPF, Comprovante residência, etc.
+  possuiRegistroFotografico: 'sim' | 'nao';
+  descricaoFotos?: string;
+}
+
+// ========== Interface Principal Estendida ==========
 export interface DadosFamilia {
+  // Identificação básica (campos existentes)
   nomeRepresentante: string;
   cpf: string;
   telefone: string;
@@ -45,6 +221,22 @@ export interface DadosFamilia {
   nascimentoRepresentante?: string;
   apoioRepresentante?: string;
   familiares?: Familiar[];
+
+  // Novos campos do template Excel
+  informacaoImovel?: InformacaoImovel;
+  caracterizacaoImovel?: CaracterizacaoImovel;
+  condicoesHabitabilidade?: CondicoesHabitabilidade;
+  chefeFamilia?: ChefeFamilia;
+  conjuge?: Conjuge;
+  demaisMembros?: MembroFamilia[];
+  historicoOcorrencias?: HistoricoOcorrencia[];
+  interdictioes?: Interdicao[];
+  desalojamentos?: DesalojamentoDesabrigo[];
+  beneficiosAuxilios?: BeneficioAuxilio[];
+  encaminhamentoHabitacional?: EncaminhamentoHabitacional;
+  historicoVistorias?: HistoricoVistorias;
+  situacaoAtual?: SituacaoAtual;
+  documentosFotograficos?: DocumentosFotograficos;
 }
 export interface CadastroFamilia extends PontoRisco {
   dados?: DadosFamilia;
@@ -83,6 +275,22 @@ export const FORMULARIO_VAZIO: CamposCadastro = {
   nascimentoRepresentante: '',
   apoioRepresentante: '',
   familiares: [],
+
+  // Novos campos opcionais do template Excel
+  informacaoImovel: undefined,
+  caracterizacaoImovel: undefined,
+  condicoesHabitabilidade: undefined,
+  chefeFamilia: undefined,
+  conjuge: undefined,
+  demaisMembros: undefined,
+  historicoOcorrencias: undefined,
+  interdictioes: undefined,
+  desalojamentos: undefined,
+  beneficiosAuxilios: undefined,
+  encaminhamentoHabitacional: undefined,
+  historicoVistorias: undefined,
+  situacaoAtual: undefined,
+  documentosFotograficos: undefined,
 };
 export function gerarIdentificador(): string {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -208,6 +416,22 @@ export function prepararCadastro(campos: CamposCadastro): DadosFamilia {
         ? { precisaoMetros: local.precisaoMetros }
         : {}),
     },
+
+    // Novos campos opcionais do template Excel (passados diretamente se existirem)
+    ...(campos.informacaoImovel ? { informacaoImovel: campos.informacaoImovel } : {}),
+    ...(campos.caracterizacaoImovel ? { caracterizacaoImovel: campos.caracterizacaoImovel } : {}),
+    ...(campos.condicoesHabitabilidade ? { condicoesHabitabilidade: campos.condicoesHabitabilidade } : {}),
+    ...(campos.chefeFamilia ? { chefeFamilia: campos.chefeFamilia } : {}),
+    ...(campos.conjuge ? { conjuge: campos.conjuge } : {}),
+    ...(campos.demaisMembros ? { demaisMembros: campos.demaisMembros } : {}),
+    ...(campos.historicoOcorrencias ? { historicoOcorrencias: campos.historicoOcorrencias } : {}),
+    ...(campos.interdictioes ? { interdictioes: campos.interdictioes } : {}),
+    ...(campos.desalojamentos ? { desalojamentos: campos.desalojamentos } : {}),
+    ...(campos.beneficiosAuxilios ? { beneficiosAuxilios: campos.beneficiosAuxilios } : {}),
+    ...(campos.encaminhamentoHabitacional ? { encaminhamentoHabitacional: campos.encaminhamentoHabitacional } : {}),
+    ...(campos.historicoVistorias ? { historicoVistorias: campos.historicoVistorias } : {}),
+    ...(campos.situacaoAtual ? { situacaoAtual: campos.situacaoAtual } : {}),
+    ...(campos.documentosFotograficos ? { documentosFotograficos: campos.documentosFotograficos } : {}),
   };
 }
 export function criarCadastroDemonstrativo(
@@ -223,50 +447,14 @@ export function criarCadastroDemonstrativo(
     criadoEm: new Date().toISOString(),
   };
 }
-export function exemploCadastro(): CamposCadastro {
-  return {
-    ...FORMULARIO_VAZIO,
-    nomeRepresentante: 'Família Exemplo da Silva',
-    cpf: '111.444.777-35',
-    telefone: '',
-    logradouro: 'Rua de demonstração',
-    numero: '10',
-    bairro: 'Centro',
-    moradores: '4',
-    nivelRisco: 'medio',
-    tipoOcorrencia: 'inundacao',
-    observacoes: 'Cadastro fictício para testar o fluxo.',
-    nascimentoRepresentante: '1988-04-12',
-    apoioRepresentante: '',
-    familiares: [
-      {
-        id: 'exemplo-conjuge',
-        nomeCompleto: 'Carlos Exemplo da Silva',
-        parentesco: 'conjuge',
-        dataNascimento: '1986-06-08',
-        cpf: '',
-        apoio: '',
-      },
-      {
-        id: 'exemplo-filho',
-        nomeCompleto: 'Alice Exemplo da Silva',
-        parentesco: 'filho',
-        dataNascimento: '2018-03-20',
-        cpf: '',
-        apoio: 'Acompanhamento de responsável',
-      },
-      {
-        id: 'exemplo-mae',
-        nomeCompleto: 'Rosa Exemplo da Silva',
-        parentesco: 'pai_mae',
-        dataNascimento: '1955-11-02',
-        cpf: '',
-        apoio: 'Mobilidade reduzida; precisa de acompanhamento para evacuação',
-      },
-    ],
-    localizacao: { latitude: -7.5608, longitude: -35.0009, origem: 'mapa' },
-  };
-}
+
+/**
+ * Dados de exemplo para demonstração - carregados sob demanda (lazy-loaded).
+ * Use `import { exemploCadastro } from './exemplo-cadastro'` quando necessário.
+ * Isso evita incluir 600+ linhas de dados de demo no bundle principal.
+ */
+export { exemploCadastro } from './exemplo-cadastro';
+
 function erroHttp(status: number): string {
   if (status === 401 || status === 403)
     return 'Sua sessão não permite esta operação. Entre novamente pelo sistema da equipe.';
@@ -401,6 +589,32 @@ export async function carregarDetalhe(
         ? (local.origem as LocalizacaoFamilia['origem'])
         : 'coordenadas',
     };
+
+  // Carregar novos campos do template Excel se existirem na resposta da API
+  const parseOptionalObject = <T>(key: string): T | undefined => {
+    const val = dado[key];
+    return val && typeof val === 'object' ? (val as T) : undefined;
+  };
+  const parseOptionalArray = <T>(key: string): T[] | undefined => {
+    const val = dado[key];
+    return Array.isArray(val) ? (val as T[]) : undefined;
+  };
+
+  campos.informacaoImovel = parseOptionalObject<InformacaoImovel>('informacaoImovel');
+  campos.caracterizacaoImovel = parseOptionalObject<CaracterizacaoImovel>('caracterizacaoImovel');
+  campos.condicoesHabitabilidade = parseOptionalObject<CondicoesHabitabilidade>('condicoesHabitabilidade');
+  campos.chefeFamilia = parseOptionalObject<ChefeFamilia>('chefeFamilia');
+  campos.conjuge = parseOptionalObject<Conjuge>('conjuge');
+  campos.demaisMembros = parseOptionalArray<MembroFamilia>('demaisMembros');
+  campos.historicoOcorrencias = parseOptionalArray<HistoricoOcorrencia>('historicoOcorrencias');
+  campos.interdictioes = parseOptionalArray<Interdicao>('interdictioes');
+  campos.desalojamentos = parseOptionalArray<DesalojamentoDesabrigo>('desalojamentos');
+  campos.beneficiosAuxilios = parseOptionalArray<BeneficioAuxilio>('beneficiosAuxilios');
+  campos.encaminhamentoHabitacional = parseOptionalObject<EncaminhamentoHabitacional>('encaminhamentoHabitacional');
+  campos.historicoVistorias = parseOptionalObject<HistoricoVistorias>('historicoVistorias');
+  campos.situacaoAtual = parseOptionalObject<SituacaoAtual>('situacaoAtual');
+  campos.documentosFotograficos = parseOptionalObject<DocumentosFotograficos>('documentosFotograficos');
+
   const erros = validarCadastro(campos);
   if (Object.keys(erros).length)
     throw new Error('Dados do cadastro inválidos: ' + Object.values(erros).join('; '));
