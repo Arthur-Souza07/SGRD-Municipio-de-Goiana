@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { fileURLToPath, URL } from 'node:url';
+import path from 'node:path';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { compression } from 'vite-plugin-compression2';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -43,7 +44,7 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/logo-goiana.png',
+            src: 'logo-goiana.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable',
@@ -115,7 +116,10 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      fs: path.resolve(__dirname, './src/empty-node-builtin.ts'),
+    }
   },
   server: { allowedHosts: ['terminal.local'] },
   define: {
