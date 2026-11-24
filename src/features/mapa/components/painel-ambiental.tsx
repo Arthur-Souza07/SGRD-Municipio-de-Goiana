@@ -31,7 +31,6 @@ export default function PainelAmbiental({
   rio,
   aoAtualizar,
   camada,
-  aoCamada,
   apenasAlta,
   aoApenasAlta,
   area,
@@ -48,7 +47,6 @@ export default function PainelAmbiental({
   rio: Leitura;
   aoAtualizar: () => void;
   camada: CamadaTerritorial;
-  aoCamada: (camada: CamadaTerritorial) => void;
   apenasAlta: boolean;
   aoApenasAlta: (ativo: boolean) => void;
   area: AreaPlanejada | null;
@@ -185,24 +183,9 @@ export default function PainelAmbiental({
               <h3>Território e suscetibilidade</h3>
               <p>Contorno azul: limite municipal · IBGE 2025</p>
             </div>
-            <label className="campo">
-              <span className="somente-leitor">Camada territorial</span>
-              <select
-                aria-label="Camada territorial"
-                value={camada}
-                onChange={(e) => aoCamada(e.target.value as CamadaTerritorial)}
-              >
-                <option value="nenhuma">Sem camada territorial</option>
-                <option value="inundacao">Suscetibilidade à inundação</option>
-                <option value="movimento">
-                  Suscetibilidade a movimento de massa
-                </option>
-                <option value="geologia">Geologia do território</option>
-                <option value="historico">
-                  Setores históricos de risco · SGB 2014
-                </option>
-              </select>
-            </label>
+            <p className="limite-cartografia">
+              Selecione uma camada pelos botões laterais do mapa.
+            </p>
             {(camada === 'inundacao' || camada === 'movimento') && (
               <>
                 <label className="filtro-alta">

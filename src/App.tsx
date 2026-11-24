@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState, useCallback, createContext, useContext, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, useLocation, Routes, Route, useNavigate } from 'react-router-dom';
 import { useDeviceType } from './hooks/useDeviceType';
+import { ThemeProvider } from './context/ThemeContext';
 import { AgentAuthPage } from './pages/auth/AgentAuthPage';
 import { ManagerAuthPage } from './pages/auth/ManagerAuthPage';
 import SessaoFamilias from './features/mapa/SessaoFamilias';
@@ -91,6 +92,13 @@ function AuthRoute() {
 }
 
 /**
+ * Header component with theme toggle for desktop
+ */
+function AppHeader() {
+  return null;
+}
+
+/**
  * Main map pages (protected routes - after login)
  */
 function PaginasMapa() {
@@ -102,17 +110,20 @@ function PaginasMapa() {
 
   return (
     <>
-      <div hidden={pathname !== '/'}>
-        <VisaoMapa />
-      </div>
-      <div hidden={pathname !== '/cadastro-equipe'}>
-        <PaginaCadastroEquipe />
-      </div>
-      <div hidden={pathname !== '/cadastro-pessoas'}>
-        <Suspense fallback={<p className="estado-aplicacao" role="status">Carregando cadastro…</p>}>
-          <CadastroPessoas />
-        </Suspense>
-      </div>
+      <AppHeader />
+      <main className="app-main">
+        <div hidden={pathname !== '/'}>
+          <VisaoMapa />
+        </div>
+        <div hidden={pathname !== '/cadastro-equipe'}>
+          <PaginaCadastroEquipe />
+        </div>
+        <div hidden={pathname !== '/cadastro-pessoas'}>
+          <Suspense fallback={<p className="estado-aplicacao" role="status">Carregando cadastro…</p>}>
+            <CadastroPessoas />
+          </Suspense>
+        </div>
+      </main>
     </>
   );
 }
@@ -122,35 +133,37 @@ function PaginasMapa() {
  */
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <SessaoFamilias>
-          <Suspense
-            fallback={
-              <p className="estado-aplicacao" role="status">
-                Preparando o mapa de Goiana…
-              </p>
-            }
-          >
-            <Routes>
-              {/* Public auth routes - device-dependent */}
-              <Route path="/login" element={<AuthRoute />} />
-              <Route path="/register" element={<AuthRoute />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <SessaoFamilias>
+            <Suspense
+              fallback={
+                <p className="estado-aplicacao" role="status">
+                  Preparando o mapa de Goiana…
+                </p>
+              }
+            >
+              <Routes>
+                {/* Public auth routes - device-dependent */}
+                <Route path="/login" element={<AuthRoute />} />
+                <Route path="/register" element={<AuthRoute />} />
 
-              {/* Protected routes - require login */}
-              <Route
-                path="/*"
-                element={
-                  <ProtectedRoute>
-                    <PaginasMapa />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </Suspense>
-        </SessaoFamilias>
-      </BrowserRouter>
-    </AuthProvider>
+                {/* Protected routes - require login */}
+                <Route
+                  path="/*"
+                  element={
+                    <ProtectedRoute>
+                      <PaginasMapa />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </SessaoFamilias>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

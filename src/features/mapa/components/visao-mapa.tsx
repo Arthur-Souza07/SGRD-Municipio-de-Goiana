@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useSessaoFamilias } from '../sessao-contexto';
 import {
   API_FAMILIAS,
@@ -15,19 +15,19 @@ import {
   useRef,
   useState,
 } from 'react';
-import { AlertTriangle, CheckCircle2, ChevronRight, Download, FlaskConical, Info, MapPin, Plus, Search, ShieldCheck, Users } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronRight, Download, FlaskConical, Info, MapPin, Search, ShieldCheck, Users } from 'lucide-react';
 import { Map as MapIcon } from 'lucide-react';
-import { ClipboardList } from 'lucide-react';
 import {
   filtrarFamilias,
   normalizarBusca,
 } from '@/features/mapa/lib/gestao-familias';
 import { useConexao } from './use-conexao';
+import { useDeviceType } from '@/hooks/useDeviceType';
 import MapaRiscos from './mapa-riscos';
 import FormularioFamilia from './formulario-familia';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import DetalhesFamilia from './detalhes-familia';
 import ListaFamilias from './lista-familias';
-import PainelAmbiental from './painel-ambiental';
 import ModalHistoricoExportacao from './ModalHistoricoExportacao';
 import { useDadosAmbientais } from './use-dados-ambientais';
 import { useExportarExcel } from './use-exportar-excel';
@@ -54,10 +54,64 @@ const demonstracao = DEMONSTRACAO;
 const basePath = BASE_MAPA;
 const fonte = familiasApi || apiMapa || `${basePath}/dados-exemplo.json`;
 
-export default function VisaoMapa() {
+// Mobile-only component: ONLY family registration form - no map, no points, no layers
+function VisaoMapaMobile() {
+  const {
+    salvarFamilia,
+    setMobileJustLoggedIn
+  } = useSessaoFamilias();
+  const [cadastroAberto, setCadastroAberto] = useState(true);
+  const [sucesso, setSucesso] = useState('');
+
+  const fecharCadastro = useCallback(() => {
+    setCadastroAberto(true);
+    setMobileJustLoggedIn(false);
+  }, [setMobileJustLoggedIn]);
+
+  async function salvar(dados: DadosFamilia, chave: string) {
+    const cadastro = await salvarFamilia(dados, chave);
+    setSucesso(
+      demonstracao
+        ? `${cadastro.nomeRepresentante} foi adicionado à demonstração. O registro fica nesta aba até a página ser atualizada.`
+        : `Cadastro de ${cadastro.nomeRepresentante} confirmado pelo servidor.`,
+    );
+    // After saving, keep form open for next registration
+    setCadastroAberto(true);
+  }
+
+  return (
+    <div className="modulo-mapa mobile-only">
+      <main id="conteudo" tabIndex={-1} className="mobile-main mobile-cadastro-only">
+        {sucesso && (
+          <div className="aviso-sucesso" role="status">
+            <CheckCircle2 size={20} />
+            <span>{sucesso}</span>
+            <button type="button" onClick={() => setSucesso('')}>
+              Fechar
+            </button>
+          </div>
+        )}
+
+        <FormularioFamilia
+          aberto={cadastroAberto}
+          demonstracao={demonstracao}
+          aoFechar={fecharCadastro}
+          aoSalvar={salvar}
+          mobileKeepOpen={true}
+        />
+      </main>
+    </div>
+  );
+}
+
+// Desktop component: Full management functionality
+function VisaoMapaDesktop() {
   const online = useConexao();
-  const [pontosOrigem, setPontosOrigem] = useState<CadastroFamilia[]>([]);
-  const { cadastrosSessao, salvarFamilia } = useSessaoFamilias();
+  const {
+    cadastrosSessao,
+    setCadastrosSessao,
+    salvarFamilia,
+  } = useSessaoFamilias();
   const rota = useLocation();
   const rotaLocalizada = useRef<string | null>(null);
   const [descartados, setDescartados] = useState(0);
@@ -75,16 +129,17 @@ export default function VisaoMapa() {
   const [busca, setBusca] = useState('');
   const [nivel, setNivel] = useState<NivelRisco | ''>('');
   const [bairroSelecionado, setBairroSelecionado] = useState<string>('Todos');
-  const [chuvaAtiva, setChuvaAtiva] = useState(false);
-  const [rioAtivo, setRioAtivo] = useState(false);
-  const [revisaoAmbiente, setRevisaoAmbiente] = useState(0);
+  const chuvaAtiva = false;
+  const rioAtivo = false;
+  const revisaoAmbiente = 0;
   const [camada, setCamada] = useState<CamadaTerritorial>('nenhuma');
   const [apenasAlta, setApenasAlta] = useState(false);
   const [areaPlanejada, setAreaPlanejada] = useState<AreaPlanejada | null>(
     null,
   );
-  const [areasDisponiveis, setAreasDisponiveis] = useState<AreaPlanejada[]>([]);
   const [historicoAberto, setHistoricoAberto] = useState(false);
+  const [pontosOrigem, setPontosOrigem] = useState<CadastroFamilia[]>([]);
+
   const chuva = useDadosAmbientais('chuva', chuvaAtiva, revisaoAmbiente);
   const rio = useDadosAmbientais('rio', rioAtivo, revisaoAmbiente);
   const estacoes = useMemo(
@@ -100,8 +155,15 @@ export default function VisaoMapa() {
       camada,
       apenasAlta,
       areaPlanejada,
+      aoCamada: (nova: CamadaTerritorial) => {
+        setCamada(nova);
+        setAreaPlanejada(null);
+      },
+      aoApenasAlta: (ativo: boolean) => {
+        setApenasAlta(ativo);
+        setAreaPlanejada(null);
+      },
       aoPlanejar: setAreaPlanejada,
-      aoAtualizarAreas: setAreasDisponiveis,
     }),
     [estacoes, camada, apenasAlta, areaPlanejada],
   );
@@ -142,6 +204,18 @@ export default function VisaoMapa() {
     setBairroSelecionado('Todos');
     setFoco((anterior) => ({ ponto, revisao: (anterior?.revisao || 0) + 1 }));
   }, []);
+
+  const editarFamilia = useCallback((familia: CadastroFamilia) => {
+    setSelecionada(familia);
+    setCadastroAberto(true);
+  }, []);
+
+  const excluirFamilia = useCallback((familia: CadastroFamilia) => {
+    setCadastrosSessao((prev) => prev.filter((c) => c.id !== familia.id));
+    setPontosOrigem((prev) => prev.filter((c) => c.id !== familia.id));
+    fecharDetalhes();
+  }, [setCadastrosSessao, fecharDetalhes]);
+
   useEffect(() => {
     if (
       !foco ||
@@ -165,6 +239,7 @@ export default function VisaoMapa() {
     });
     return () => cancelAnimationFrame(quadro);
   }, [foco, cadastroAberto, selecionada]);
+
   useEffect(() => {
     const id = rota.state?.familiaId;
     if (typeof id !== 'string' || rotaLocalizada.current === rota.key) return;
@@ -174,6 +249,7 @@ export default function VisaoMapa() {
       localizar(familia);
     }
   }, [rota.state, rota.key, pontos, localizar]);
+
   const recarregar = useCallback(() => setRevisao((n) => n + 1), []);
 
   useEffect(() => {
@@ -222,11 +298,12 @@ export default function VisaoMapa() {
   }
 
   return (
-    <div className="modulo-mapa">
+    <div className="modulo-mapa desktop-only">
       <div className="pagina-mapa">
         <a href="#conteudo" className="pular-conteudo">
           Ir para o conteúdo
         </a>
+
         <aside className="barra-lateral" aria-label="Defesa Civil de Goiana">
           <div className="marca-prefeitura">
             <img
@@ -236,20 +313,6 @@ export default function VisaoMapa() {
               alt="Prefeitura de Goiana — Crescendo juntos, cuidando da gente"
             />
           </div>
-          <div className="identidade-sistema">
-            <span className="icone-defesa">
-              <ShieldCheck size={25} strokeWidth={1.6} />
-            </span>
-            <div>
-              <span>Prefeitura de Goiana</span>
-              <strong>Defesa Civil</strong>
-            </div>
-          </div>
-          <p className="descricao-sistema">
-            Sistema de Redução de
-            <br />
-            Riscos de Desastres
-          </p>
           <nav className="navegacao" aria-label="Monitoramento social">
             <span className="titulo-navegacao">MONITORAMENTO SOCIAL</span>
             <a href="#mapa-familias" aria-current="page">
@@ -261,10 +324,9 @@ export default function VisaoMapa() {
               <Users size={20} />
               <span>Consultar famílias</span>
             </a>
-            <Link to="/cadastro-equipe" className="nav-secundaria">
-              <ClipboardList size={20} />
-              <span>Ficha da equipe</span>
-            </Link>
+            <div className="tema-lateral" aria-label="Tema da interface">
+              <ThemeToggle />
+            </div>
           </nav>
           <div className="base-lateral">
             {demonstracao && (
@@ -287,6 +349,7 @@ export default function VisaoMapa() {
             </div>
           </div>
         </aside>
+
         <main id="conteudo" tabIndex={-1}>
           <header className="cabecalho">
             <div>
@@ -308,6 +371,7 @@ export default function VisaoMapa() {
               </span>
             )}
           </header>
+
           <div className="conteudo-mapa">
             {!online && (
               <p className="aviso-conexao" role="status">
@@ -316,31 +380,22 @@ export default function VisaoMapa() {
                 atualizar a página.
               </p>
             )}
+
             <div className="introducao-gestao">
               <div>
                 <span className="sobretitulo">GESTÃO EM CAMPO</span>
                 <h2>Cada família, no mapa.</h2>
                 <p>Cadastre, localize e acompanhe as famílias de Goiana.</p>
               </div>
-              <button
-                className="botao-primario cadastrar-familia"
-                type="button"
-                disabled={!demonstracao && !familiasApi}
-                onClick={() => {
-                  setSucesso('');
-                  setCadastroAberto(true);
-                }}
-              >
-                <Plus size={18} />
-                Cadastrar família
-              </button>
             </div>
+
             {!demonstracao && !familiasApi && (
               <p className="aviso-dados">
                 A fonte atual permite apenas consulta. O cadastro depende da
                 integração com a API da equipe.
               </p>
             )}
+
             <div className="indicadores">
               <div>
                 <span className="icone-indicador">
@@ -378,32 +433,8 @@ export default function VisaoMapa() {
                 </div>
               </div>
             </div>
-            <PainelAmbiental
-              chuvaAtiva={chuvaAtiva}
-              rioAtivo={rioAtivo}
-              aoChuva={setChuvaAtiva}
-              aoRio={setRioAtivo}
-              chuva={chuva}
-              rio={rio}
-              aoAtualizar={() => setRevisaoAmbiente((n) => n + 1)}
-              camada={camada}
-              aoCamada={(nova) => {
-                setCamada(nova);
-                setAreaPlanejada(null);
-              }}
-              apenasAlta={apenasAlta}
-              aoApenasAlta={(ativo) => {
-                setApenasAlta(ativo);
-                setAreaPlanejada(null);
-              }}
-              area={areaPlanejada}
-              aoLimparArea={() => setAreaPlanejada(null)}
-              aoCadastrar={() => {
-                if (demonstracao || familiasApi) setCadastroAberto(true);
-              }}
-              areas={areasDisponiveis}
-              aoSelecionarArea={setAreaPlanejada}
-            />
+
+
             {sucesso && (
               <div className="aviso-sucesso" role="status">
                 <CheckCircle2 size={20} />
@@ -413,6 +444,7 @@ export default function VisaoMapa() {
                 </button>
               </div>
             )}
+
             <section
               className="filtros-familias"
               aria-label="Buscar e filtrar famílias"
@@ -495,6 +527,7 @@ export default function VisaoMapa() {
                 {visiveis.length} de {pontos.length} famílias
               </output>
             </section>
+
             <div id="mapa-familias">
               <MapaRiscos
                 pontos={visiveis}
@@ -508,12 +541,16 @@ export default function VisaoMapa() {
                 filtroAtivo={!!(buscaAdiada.trim() || nivel || bairroSelecionado !== 'Todos')}
               />
             </div>
+
             <ListaFamilias
               key={`${nivel}:${normalizarBusca(buscaAdiada)}:${bairroSelecionado}`}
               familias={visiveis}
               aoSelecionar={selecionarFamilia}
               aoLocalizar={localizar}
+              aoEditar={editarFamilia}
+              aoExcluir={excluirFamilia}
             />
+
             <footer className="rodape-pagina">
               <span>Defesa Civil de Goiana · Pernambuco</span>
               <span>
@@ -529,6 +566,7 @@ export default function VisaoMapa() {
           demonstracao={demonstracao}
           aoFechar={fecharCadastro}
           aoSalvar={salvar}
+          mobileKeepOpen={false}
         />
         <DetalhesFamilia
           key={selecionada?.id || 'sem-selecao'}
@@ -550,4 +588,15 @@ export default function VisaoMapa() {
       </div>
     </div>
   );
+}
+
+export default function VisaoMapa() {
+  const deviceType = useDeviceType();
+  const isMobile = deviceType === 'mobile' || deviceType === 'tablet';
+
+  if (isMobile) {
+    return <VisaoMapaMobile />;
+  }
+
+  return <VisaoMapaDesktop />;
 }

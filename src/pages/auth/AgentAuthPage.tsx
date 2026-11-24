@@ -8,6 +8,7 @@ import {
 } from '../../components/auth';
 import { handleRegister, handleLogin } from '../../utils/auth';
 import type { AgentRegisterData, AgentLoginData } from '../../utils/validation';
+import { useSessaoFamilias } from '../../features/mapa/sessao-contexto';
 import './AgentAuthPage.css';
 
 interface AgentAuthPageProps {
@@ -22,6 +23,7 @@ export function AgentAuthPage({
   onSkipToPeopleRegistration,
 }: AgentAuthPageProps) {
   const navigate = useNavigate();
+  const { setMobileJustLoggedIn } = useSessaoFamilias();
   const [screen, setScreen] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export function AgentAuthPage({
       await handleRegister(data);
       setSuccess('Cadastro realizado com sucesso! Redirecionando…');
       setTimeout(() => {
+        setMobileJustLoggedIn(true);
         onLoginSuccess();
         navigate('/');
       }, 1500);
@@ -56,6 +59,7 @@ export function AgentAuthPage({
       await handleLogin(data);
       setSuccess('Login realizado! Redirecionando…');
       setTimeout(() => {
+        setMobileJustLoggedIn(true);
         onLoginSuccess();
         navigate('/');
       }, 1500);

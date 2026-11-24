@@ -8,3 +8,9 @@ export { ManagerLoginForm } from './ManagerLoginForm';
 
 export { DevSkipButton } from './DevSkipButton';
 export type { DevSkipButtonProps } from './DevSkipButton';
+
+export { BiometricPrompt } from './BiometricPrompt';
+export type { BiometricPromptProps } from './BiometricPrompt';
+
+export { ReauthModal } from './ReauthModal';
+export type { ReauthModalProps } from './ReauthModal';

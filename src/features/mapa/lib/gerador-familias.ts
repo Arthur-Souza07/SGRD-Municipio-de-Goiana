@@ -21,6 +21,10 @@ import type {
 } from './familias';
 import { TIPOS_OCORRENCIA } from './familias';
 import { centroideBairro, validarLocalizacaoGoiana } from './territorio';
+import {
+  calcularRiscoTerritorial,
+  sortearPontoEmAreaSuscetibilidade,
+} from './risco-territorial';
 
 // ============================================================
 // SEEDABLE PRNG (Mulberry32)
@@ -306,6 +310,7 @@ interface GeradorOpcoes {
   risco?: NivelRisco;
   bairro?: string;
   numMembros?: number;
+  preferirAreaSuscetibilidade?: boolean;
 }
 
 function RiscoTipoOcorrencia(rng: SeededRandom, risco: NivelRisco): TipoOcorrencia {
@@ -317,7 +322,13 @@ function RiscoTipoOcorrencia(rng: SeededRandom, risco: NivelRisco): TipoOcorrenc
   }
 }
 
-function gerarInformacaoImovel(rng: SeededRandom, endereco: ReturnType<typeof gerarEndereco>, localizacao: LocalizacaoFamilia, risco: NivelRisco): InformacaoImovel {
+function gerarInformacaoImovel(
+  rng: SeededRandom,
+  endereco: ReturnType<typeof gerarEndereco>,
+  localizacao: LocalizacaoFamilia,
+  risco: NivelRisco,
+  avaliacaoTerritorial = calcularRiscoTerritorial(localizacao.longitude, localizacao.latitude),
+): InformacaoImovel {
   const hoje = new Date();
   const dataCadastro = `${String(hoje.getDate()).padStart(2, '0')}/${String(hoje.getMonth() + 1).padStart(2, '0')}/${hoje.getFullYear()}`;
   const dataAtualizacao = rng.bool(0.7) ? dataCadastro : '-';
@@ -329,7 +340,12 @@ function gerarInformacaoImovel(rng: SeededRandom, endereco: ReturnType<typeof ge
     nao_informado: 'Não informado',
   };
 
-  const tipoOcorrencia = RiscoTipoOcorrencia(rng, risco);
+  const tipoOcorrencia: TipoOcorrencia =
+    avaliacaoTerritorial.tipoPrioritario === 'inundacao'
+      ? 'inundacao'
+      : avaliacaoTerritorial.tipoPrioritario === 'movimento'
+        ? 'deslizamento'
+        : RiscoTipoOcorrencia(rng, risco);
 
   return {
     municipio: 'GOIANA / PE',
@@ -660,10 +676,33 @@ function getRng(seed?: number): SeededRandom {
 
 function gerarFamiliaCompleta(opcoes: GeradorOpcoes = {}): DadosFamilia {
   const rng = getRng(opcoes.seed);
-  const risco = opcoes.risco || rng.choice(['baixo', 'medio', 'alto']) as NivelRisco;
   const endereco = gerarEndereco(rng);
   if (opcoes.bairro) endereco.bairro = opcoes.bairro;
-  const localizacao = gerarCoordenadasGoiana(rng, endereco.bairro);
+  const pontoSuscetibilidade = opcoes.preferirAreaSuscetibilidade
+    ? sortearPontoEmAreaSuscetibilidade(() => rng.next())
+    : null;
+  const localizacao = pontoSuscetibilidade
+    ? {
+        ...pontoSuscetibilidade,
+        origem: rng.choice(['gps', 'mapa', 'coordenadas'] as const),
+        precisaoMetros: rng.nextInt(5, 30),
+      }
+    : gerarCoordenadasGoiana(rng, endereco.bairro);
+  const avaliacaoTerritorial = calcularRiscoTerritorial(
+    localizacao.longitude,
+    localizacao.latitude,
+  );
+  const risco: NivelRisco = opcoes.risco
+    ? opcoes.risco
+    : avaliacaoTerritorial.nivel;
+  const tipoOcorrencia: TipoOcorrencia =
+    avaliacaoTerritorial.tipoPrioritario === 'inundacao'
+      ? 'inundacao'
+      : avaliacaoTerritorial.tipoPrioritario === 'movimento'
+        ? 'deslizamento'
+        : opcoes.risco
+          ? RiscoTipoOcorrencia(rng, risco)
+          : 'nao_informado';
 
   // Generate family composition
   const numMembros = opcoes.numMembros ?? rng.nextInt(1, 8);
@@ -708,7 +747,7 @@ function gerarFamiliaCompleta(opcoes: GeradorOpcoes = {}): DadosFamilia {
     complemento: endereco.complemento,
     moradores: numMembros,
     nivelRisco: risco,
-    tipoOcorrencia: RiscoTipoOcorrencia(rng, risco),
+    tipoOcorrencia,
     observacoes: rng.bool(0.3) ? rng.choice([
       'Família em área de risco monitorada.',
       'Necessita acompanhamento prioritário.',
@@ -720,7 +759,13 @@ function gerarFamiliaCompleta(opcoes: GeradorOpcoes = {}): DadosFamilia {
     localizacao,
     nascimentoRepresentante: chefeFamilia.dataNascimento,
     apoioRepresentante: chefeFamilia.observacao,
-    informacaoImovel: gerarInformacaoImovel(rng, endereco, localizacao, risco),
+    informacaoImovel: gerarInformacaoImovel(
+      rng,
+      endereco,
+      localizacao,
+      avaliacaoTerritorial.nivel,
+      avaliacaoTerritorial,
+    ),
     caracterizacaoImovel: gerarCaracterizacaoImovel(rng),
     condicoesHabitabilidade: gerarCondicoesHabitabilidade(rng),
     chefeFamilia,
@@ -741,23 +786,12 @@ export function gerarFamiliasDemo(quantidade: number, seed: number = 20261030): 
   const rng = new SeededRandom(seed);
   const familias: DadosFamilia[] = [];
 
-  // Distribute risk levels: 30% alto, 40% medio, 30% baixo
-  const riscos: NivelRisco[] = [];
-  for (let i = 0; i < quantidade; i++) {
-    const r = rng.next();
-    if (r < 0.3) riscos.push('alto');
-    else if (r < 0.7) riscos.push('medio');
-    else riscos.push('baixo');
-  }
-  // Shuffle to distribute spatially
-  rng.shuffle(riscos);
-
   for (let i = 0; i < quantidade; i++) {
     // Use a derived seed for each family to ensure reproducibility but variety
     const familySeed = (seed + i + 1) * 1000 + rng.nextInt(1, 999);
     const familia = gerarFamiliaCompleta({
       seed: familySeed,
-      risco: riscos[i],
+      preferirAreaSuscetibilidade: rng.bool(0.5),
     });
     familias.push(familia);
   }

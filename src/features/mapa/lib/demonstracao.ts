@@ -1,6 +1,7 @@
 import type { CadastroFamilia } from './familias';
 import { gerarFamiliasDemo } from './gerador-familias';
 import { criarCadastroDemonstrativo } from './familias';
+import { inicializarRiscoTerritorial } from './risco-territorial';
 
 /**
  * Gera famílias de demonstração usando o gerador procedural.
@@ -11,6 +12,8 @@ export async function carregarDemonstracao(
   _endereco: string,
   _signal?: AbortSignal,
 ) {
+  await inicializarRiscoTerritorial();
+
   // Usar a mesma seed do fontes.json (20261030) para consistência
   const familiasDados = gerarFamiliasDemo(50, 20261030);
 

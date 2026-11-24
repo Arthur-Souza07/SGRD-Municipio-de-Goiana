@@ -20,8 +20,9 @@ export interface ConfiguracaoAmbiente {
   camada: CamadaTerritorial;
   apenasAlta: boolean;
   areaPlanejada: AreaPlanejada | null;
+  aoCamada: (camada: CamadaTerritorial) => void;
+  aoApenasAlta: (ativo: boolean) => void;
   aoPlanejar: (area: AreaPlanejada) => void;
-  aoAtualizarAreas: (areas: AreaPlanejada[]) => void;
 }
 type Propriedades = {
   id: string;
@@ -87,7 +88,6 @@ export default function CamadasAmbientaisMapa({
     apenasAlta,
     areaPlanejada,
     aoPlanejar,
-    aoAtualizarAreas,
   } = configuracao;
   const cache = useRef(
     new Map<string, FeatureCollection<Geometry, Propriedades>>(),
@@ -97,8 +97,6 @@ export default function CamadasAmbientaisMapa({
   const marcadoresEstacoes = useRef(new Map<string, Leaflet.Marker>());
   const planejar = useRef(aoPlanejar);
   planejar.current = aoPlanejar;
-  const atualizarAreas = useRef(aoAtualizarAreas);
-  atualizarAreas.current = aoAtualizarAreas;
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
   const [tentativa, setTentativa] = useState(0);
@@ -249,10 +247,7 @@ export default function CamadasAmbientaisMapa({
   useEffect(() => {
     setErro('');
     setCarregando(false);
-    // Don't clear areas synchronously (prevents UI flash during layer switch)
-    // Areas will be updated in the success path below, or cleared for 'nenhuma'/'geologia'/'historico'
     if (camada === 'nenhuma') {
-      atualizarAreas.current([]);
       return;
     }
     let cancelado = false;
@@ -373,21 +368,6 @@ export default function CamadasAmbientaisMapa({
         },
       }).addTo(mapa);
       layer.current = geo;
-      atualizarAreas.current(
-        camada === 'geologia' || camada === 'historico'
-          ? []
-          : dados.features
-              .filter(
-                (f) =>
-                  f.properties.camada === camada &&
-                  (!apenasAlta || f.properties.descricao === 'Alta'),
-              )
-              .map((f) => ({
-                id: f.properties.id,
-                descricao: f.properties.descricao,
-                camada,
-              })),
-      );
       setCarregando(false);
     }
     iniciar()

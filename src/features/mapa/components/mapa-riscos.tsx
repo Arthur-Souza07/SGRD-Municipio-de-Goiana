@@ -6,6 +6,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  type CSSProperties,
 } from 'react';
 import {
   Expand,
@@ -14,6 +15,11 @@ import {
   MapPin,
   RefreshCw,
   Users,
+  CircleOff,
+  Waves,
+  Mountain,
+  Gem,
+  History,
 } from 'lucide-react';
 import {
   contarNiveis,
@@ -289,6 +295,32 @@ function MapaRiscos({
         </p>
       )}
       <footer className="estado-mapa">
+        <div className="controles-camadas-mapa" aria-label="Camadas territoriais">
+          {([
+            ['nenhuma', 'Sem camada', '#64748b'],
+            ['inundacao', 'Inundação', '#2563eb'],
+            ['movimento', 'Movimento', '#c04b28'],
+            ['geologia', 'Geologia', '#8e72ab'],
+            ['historico', 'Histórico', '#703f97'],
+          ] as const).map(([valor, titulo, cor]) => (
+            <button
+              key={valor}
+              type="button"
+              className={ambiente.camada === valor ? 'camada-mapa-ativa' : ''}
+              aria-pressed={ambiente.camada === valor}
+              aria-label={titulo}
+              title={titulo}
+              onClick={() => ambiente.aoCamada(valor)}
+              style={{ '--cor-camada': cor } as CSSProperties}
+            >
+              {valor === 'nenhuma' && <CircleOff size={16} aria-hidden="true" />}
+              {valor === 'inundacao' && <Waves size={16} aria-hidden="true" />}
+              {valor === 'movimento' && <Mountain size={16} aria-hidden="true" />}
+              {valor === 'geologia' && <Gem size={16} aria-hidden="true" />}
+              {valor === 'historico' && <History size={16} aria-hidden="true" />}
+            </button>
+          ))}
+        </div>
         <output
           aria-live="polite"
           data-pontos-plotados={plotagem.processados}

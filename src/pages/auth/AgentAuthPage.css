@@ -1,10 +1,11 @@
 /* Agent Auth Page Styles - Mobile First */
+/* Uses CSS variables from index.css for theme support */
 
-/* CSS Custom Properties */
-:root {
-  --color-primary: #1e40af;
-  --color-primary-hover: #1e3a8a;
-  --color-primary-light: #dbeafe;
+:root:not([data-theme="light"]):not([data-theme="dark"]) {
+  /* Fallback values for when not using index.css theme */
+  --color-primary: #103f66;
+  --color-primary-hover: #0b314f;
+  --color-primary-light: #dce8f0;
   --color-secondary: #059669;
   --color-secondary-hover: #047857;
   --color-warning: #f59e0b;
@@ -204,7 +205,7 @@
 
 .field-input:hover,
 .field-select:hover {
-  border-color: #cbd5e1;
+  border-color: var(--color-border-light);
 }
 
 .field-input:focus,
@@ -216,7 +217,7 @@
 
 .field-input:disabled,
 .field-select:disabled {
-  background: #f1f5f9;
+  background: var(--color-hover);
   color: var(--color-text-muted);
   cursor: not-allowed;
 }
@@ -445,8 +446,8 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--color-hover);
+  border-color: var(--color-border-light);
 }
 
 .btn-secondary:focus-visible {
@@ -487,13 +488,13 @@
 .form-error {
   background: var(--color-error-light);
   color: var(--color-error);
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-error-border);
 }
 
 .form-success {
   background: var(--color-success-light);
   color: var(--color-success);
-  border: 1px solid #bbf7d0;
+  border: 1px solid var(--color-success-border);
 }
 
 /* Switch Link */
@@ -630,7 +631,7 @@
 .dev-skip-label {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #92400e;
+  color: var(--color-warning-border);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0 0 0.75rem;
@@ -656,17 +657,17 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   background: var(--color-warning);
-  color: #1f2937;
+  color: var(--color-bg);
   min-height: 44px;
 }
 
 .dev-skip-button:hover {
-  background: #d97706;
+  background: var(--color-warning-hover);
 }
 
 .dev-skip-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px #fde68a;
+  box-shadow: 0 0 0 3px var(--color-warning-border);
 }
 
 .dev-skip-button-alt {
@@ -676,19 +677,19 @@
 }
 
 .dev-skip-button-alt:hover {
-  background: #f1f5f9;
+  background: var(--color-hover);
 }
 
 .dev-skip-note {
   display: block;
   margin-top: 0.75rem;
   font-size: 0.6875rem;
-  color: #92400e;
+  color: var(--color-warning-border);
   text-align: center;
 }
 
 .dev-skip-note strong {
-  color: #78350f;
+  color: var(--color-warning-bg);
 }
 
 .dev-skip-hide {
@@ -702,7 +703,7 @@
   justify-content: center;
   background: none;
   border: none;
-  color: #92400e;
+  color: var(--color-warning-border);
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
@@ -713,7 +714,8 @@
 
 .dev-skip-hide:hover {
   opacity: 1;
-  background: #fde68a;
+  background: var(--color-warning-border);
+  color: var(--color-bg);
 }
 
 /* Responsive - Tablet and up */

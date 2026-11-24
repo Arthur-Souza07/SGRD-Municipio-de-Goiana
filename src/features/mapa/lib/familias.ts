@@ -201,6 +201,14 @@ export interface DocumentosFotograficos {
   listaDocumentos?: string[]; // RG, CPF, Comprovante residência, etc.
   possuiRegistroFotografico: 'sim' | 'nao';
   descricaoFotos?: string;
+  fotosAnexadas?: FotoAnexada[];
+}
+
+export interface FotoAnexada {
+  nome: string;
+  tipo: string;
+  tamanho: number;
+  dadosBase64: string;
 }
 
 // ========== Interface Principal Estendida ==========

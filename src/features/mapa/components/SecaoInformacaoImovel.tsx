@@ -1,4 +1,9 @@
 import { type InformacaoImovel } from '@/features/mapa/lib/familias';
+import { useEffect, useState } from 'react';
+import {
+  calcularRiscoTerritorial,
+  inicializarRiscoTerritorial,
+} from '@/features/mapa/lib/risco-territorial';
 
 interface Props {
   dados: InformacaoImovel | undefined;
@@ -14,6 +19,57 @@ export default function SecaoInformacaoImovel({
   apenasLeitura = false,
 }: Props) {
   const d = dados || {} as InformacaoImovel;
+  const [sugestao, setSugestao] = useState('');
+
+  useEffect(() => {
+    const longitude = Number(d.longitude);
+    const latitude = Number(d.latitude);
+    if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) {
+      setSugestao('');
+      return;
+    }
+
+    let cancelado = false;
+    const temporizador = window.setTimeout(() => {
+      void (async () => {
+        await inicializarRiscoTerritorial();
+        if (cancelado) return;
+        const calculo = calcularRiscoTerritorial(longitude, latitude);
+        const nivel = calculo.nivel === 'alto'
+          ? 'alto'
+          : calculo.nivel === 'medio'
+            ? 'médio'
+            : 'baixo';
+        setSugestao(
+          `Avaliação territorial calculada: ${nivel}. Pontuação ${calculo.pontuacao}. ${calculo.fatores.slice(0, 2).join(' ')}`,
+        );
+        if (!d.tipoRisco && !d.grauRisco) {
+          aoAlterar({
+            ...d,
+            tipoRisco:
+              calculo.tipoPrioritario === 'inundacao'
+                ? 'Inundação'
+                : calculo.tipoPrioritario === 'movimento'
+                  ? 'Movimento de massa'
+                  : 'Não informado',
+            grauRisco:
+              calculo.nivel === 'alto'
+                ? 'Alto'
+                : calculo.nivel === 'medio'
+                  ? 'Médio'
+                  : 'Baixo',
+          });
+        }
+      })().catch(() => {
+        if (!cancelado) setSugestao('');
+      });
+    }, 300);
+
+    return () => {
+      cancelado = true;
+      window.clearTimeout(temporizador);
+    };
+  }, [d.longitude, d.latitude]);
 
   function alterar<K extends keyof InformacaoImovel>(campo: K, valor: InformacaoImovel[K]) {
     aoAlterar({ ...d, [campo]: valor });
@@ -177,6 +233,12 @@ export default function SecaoInformacaoImovel({
           {ajuda('latitude')}
         </label>
       </div>
+
+      {sugestao && (
+        <p className="sugestao-risco-territorial" role="status">
+          Sugestão territorial: {sugestao} Esta referência não substitui a avaliação da Defesa Civil.
+        </p>
+      )}
 
       <div className="grade-campos">
         <label className="campo">

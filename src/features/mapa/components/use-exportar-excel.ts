@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import XlsxPopulate from 'xlsx-populate';
 import type { Sheet, Workbook } from 'xlsx-populate';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import type { CadastroFamilia, DadosFamilia } from '@/features/mapa/lib/familias';
 import { nomeDaFamilia } from '@/features/mapa/lib/pontos';
 import { TIPOS_OCORRENCIA } from '@/features/mapa/lib/familias';
@@ -38,29 +40,31 @@ interface ExportacaoHistoricoItem {
 }
 
 /**
- * Converte blob para base64 para armazenar no localStorage
+ * Converte ArrayBuffer para base64 para armazenar no localStorage
  */
-async function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+async function arrayBufferToBase64(buffer: ArrayBuffer): Promise<string> {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
 }
 
 /**
  * Salva exportação no histórico do localStorage
  */
 async function salvarHistorico(
-  blobs: Array<{ familia: CadastroFamilia; blob: Blob; nomeArquivo: string }>
+  resultados: Array<{ familia: CadastroFamilia; arrayBuffer: ArrayBuffer; nomeArquivo: string }>
 ): Promise<void> {
   try {
     const salvo = localStorage.getItem('exportacoes-familias');
     const atual: ExportacaoHistoricoItem[] = salvo ? JSON.parse(salvo) : [];
 
-    for (const { familia, blob, nomeArquivo } of blobs) {
-      const base64 = await blobToBase64(blob);
+    for (const { familia, arrayBuffer, nomeArquivo } of resultados) {
+      const base64 = await arrayBufferToBase64(arrayBuffer);
 
       const novoItem: ExportacaoHistoricoItem = {
         id: `${familia.id}_${Date.now()}`,
@@ -87,13 +91,13 @@ async function salvarHistorico(
           const reduzido = atual.slice(0, Math.floor(atual.length / 2));
           localStorage.setItem('exportacoes-familias', JSON.stringify(reduzido));
           // Retry saving
-          return salvarHistorico(blobs);
+          return salvarHistorico(resultados);
         }
       } catch {
         // If still fails, warn user
         console.warn('localStorage quota exceeded. Export history could not be saved.');
         alert('Aviso: O histórico de exportações está cheio. As exportações mais antigas foram removidas para dar espaço às novas.');
-        return salvarHistorico(blobs);
+        return salvarHistorico(resultados);
       }
     }
     console.error('Erro ao salvar histórico:', e);
@@ -104,6 +108,39 @@ interface OpcoesExportacao {
   prefixoArquivo?: string;
   umaPastaPorFamilia?: boolean;
   endpoint?: string; // API endpoint para carregar detalhes completos
+}
+
+/**
+ * Cria um arquivo ZIP contendo todas as planilhas .xlsm em uma pasta
+ * Evita download de múltiplos arquivos individuais que travam o navegador
+ */
+async function criarZipComPlanilhas(
+  resultados: Array<{ familia: CadastroFamilia; arrayBuffer: ArrayBuffer; nomeArquivo: string }>,
+  prefixoArquivo: string
+): Promise<void> {
+  const zip = new JSZip();
+
+  // Nome da pasta baseada no prefixo e data
+  const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+  const nomePasta = `${prefixoArquivo}_${dataAtual}`;
+
+  // Adicionar cada planilha na pasta do ZIP
+  for (const { arrayBuffer, nomeArquivo } of resultados) {
+    zip.file(`${nomePasta}/${nomeArquivo}`, arrayBuffer);
+  }
+
+  // Gerar o ZIP
+  const zipBlob = await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 }
+  });
+
+  // Baixar o arquivo ZIP único
+  const zipNome = `${nomePasta}.zip`;
+  saveAs(zipBlob, zipNome);
+
+  console.log(`[exportar] ZIP criado: ${zipNome} com ${resultados.length} planilhas`);
 }
 
 /**
@@ -654,7 +691,7 @@ function preencherPlanilha(sheet: Sheet, familia: CadastroFamilia): void {
 }
 
 /**
- * Exporta múltiplas famílias para arquivos .xlsm separados (uma aba por arquivo)
+ * Exporta múltiplas famílias criando um único arquivo ZIP com todas as planilhas
  * USA xlsx-populate que PRESERVA VBA, STYLES, IMAGES, DRAWINGS nativamente
  * OTIMIZAÇÃO: Carrega o template uma única vez e reutiliza o ArrayBuffer em cache
  */
@@ -662,14 +699,14 @@ async function exportarMultiplasAbas(
   familias: readonly CadastroFamilia[],
   prefixoArquivo: string,
   endpoint?: string
-): Promise<Array<{ familia: CadastroFamilia; blob: Blob; nomeArquivo: string }>> {
+): Promise<Array<{ familia: CadastroFamilia; arrayBuffer: ArrayBuffer; nomeArquivo: string }>> {
   if (!familias.length) return [];
 
   // Garantir que todas as famílias tenham dados completos
   const familiasCompletas = await garantirDadosCompletos(familias, endpoint);
 
   const familiasComDados = familiasCompletas.filter(f => f.dados || f.resumoDemonstrativo);
-  const resultados: Array<{ familia: CadastroFamilia; blob: Blob; nomeArquivo: string }> = [];
+  const resultados: Array<{ familia: CadastroFamilia; arrayBuffer: ArrayBuffer; nomeArquivo: string }> = [];
 
   // OTIMIZAÇÃO: Criar workbook do template em cache (evita fetch repetido)
   for (let i = 0; i < familiasComDados.length; i++) {
@@ -699,24 +736,16 @@ async function exportarMultiplasAbas(
     const arrayBuffer = await wb.outputAsync('arraybuffer');
     console.log(`[xlsx-populate] ${nomeAba}: ${arrayBuffer.byteLength} bytes`);
 
-    const blob = new Blob([arrayBuffer], { type: 'application/vnd.ms-excel.sheet.macroEnabled.12' });
     const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
     const nomeArquivo = `${prefixoArquivo}_${nomeAba}_${dataAtual}.xlsm`;
 
-    // Baixar
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nomeArquivo;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    // Defer revocation to allow browser to start download
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-    resultados.push({ familia, blob, nomeArquivo });
-    await new Promise(r => setTimeout(r, 50));
+    resultados.push({ familia, arrayBuffer, nomeArquivo });
+    // Pequena pausa para não bloquear a UI
+    await new Promise(r => setTimeout(r, 10));
   }
+
+  // Criar ZIP com todas as planilhas
+  await criarZipComPlanilhas(resultados, prefixoArquivo);
 
   return resultados;
 }
@@ -741,12 +770,13 @@ function removerAbasIndesejadas(workbook: Workbook): void {
 
 /**
  * Exporta cada família em arquivo separado (comportamento original)
+ * Agora usa a mesma lógica que exportarMultiplasAbas (cria ZIP)
  */
 async function exportarArquivosSeparados(
   familias: readonly CadastroFamilia[],
   prefixoArquivo: string,
   endpoint?: string
-): Promise<Array<{ familia: CadastroFamilia; blob: Blob; nomeArquivo: string }>> {
+): Promise<Array<{ familia: CadastroFamilia; arrayBuffer: ArrayBuffer; nomeArquivo: string }>> {
   return exportarMultiplasAbas(familias, prefixoArquivo, endpoint);
 }
 
@@ -760,7 +790,7 @@ export function useExportarExcel(opcoes: OpcoesExportacao = {}) {
         return;
       }
       try {
-        let resultados: Array<{ familia: CadastroFamilia; blob: Blob; nomeArquivo: string }> = [];
+        let resultados: Array<{ familia: CadastroFamilia; arrayBuffer: ArrayBuffer; nomeArquivo: string }> = [];
         if (umaPastaPorFamilia) {
           resultados = await exportarArquivosSeparados([familia], prefixoArquivo, endpoint);
         } else {
@@ -781,7 +811,7 @@ export function useExportarExcel(opcoes: OpcoesExportacao = {}) {
     async (familias: readonly CadastroFamilia[]) => {
       if (!familias.length) return;
       try {
-        let resultados: Array<{ familia: CadastroFamilia; blob: Blob; nomeArquivo: string }> = [];
+        let resultados: Array<{ familia: CadastroFamilia; arrayBuffer: ArrayBuffer; nomeArquivo: string }> = [];
         if (umaPastaPorFamilia) {
           resultados = await exportarArquivosSeparados(familias, prefixoArquivo, endpoint);
         } else {

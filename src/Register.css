@@ -1,6 +1,13 @@
 /* ============================================================
    Estilos EXCLUSIVOS da tela de cadastro.
    Não depende de classes internas do Login.css.
+   Usa variáveis CSS globais do tema (index.css):
+   --color-bg, --color-text, --color-text-muted, --color-primary,
+   --color-primary-hover, --color-primary-light, --color-border,
+   --color-border-light, --color-card, --color-card-hover,
+   --color-hover, --color-shadow, --color-success, --color-success-bg,
+   --color-success-border, --color-error, --color-error-bg,
+   --color-error-border, --color-warning, --color-warning-bg
    ============================================================ */
 
 /* Largura do conteúdo: cresce de celular para tablet e PC */
@@ -16,7 +23,7 @@
 
 .agent-register__required-note {
   margin: 14px 0 0;
-  color: #6f8197;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -24,15 +31,15 @@
 .agent-register__card {
   min-width: 0;
   padding: 28px;
-  background: #fff;
-  border: 1px solid #dce5ee;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+  box-shadow: 0 8px 24px var(--color-shadow);
 }
 
 .agent-register__card h2 {
   margin: 0 0 20px;
-  color: #183858;
+  color: var(--color-text);
   font-size: 24px;
   line-height: 1.35;
   font-weight: 500;
@@ -41,7 +48,7 @@
 /* ===== Seções do formulário (separadas por uma linha) ===== */
 .agent-register__section {
   padding: 24px 0;
-  border-top: 1px solid #e3ebf3;
+  border-top: 1px solid var(--color-border-light);
 }
 
 /* A primeira seção não precisa de linha em cima */
@@ -52,7 +59,7 @@
 
 .agent-register__section h3 {
   margin: 0 0 16px;
-  color: #183858;
+  color: var(--color-text);
   font-size: 18px;
   line-height: 1.35;
   font-weight: 650;
@@ -83,7 +90,7 @@
   flex-direction: column;
   gap: 8px;
   margin-bottom: 20px;
-  color: #172f4b;
+  color: var(--color-text);
   font-size: 16px;
   font-weight: 500;
 }
@@ -93,33 +100,33 @@
   min-width: 0;
   height: 56px;
   padding: 0 16px;
-  border: 1px solid #d5e0ec;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   outline: none;
-  background: #fff;
-  color: #172f4b;
+  background: var(--color-card);
+  color: var(--color-text);
   font: inherit;
   font-size: 16px; /* 16px evita zoom automático no iPad */
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .agent-register__field input::placeholder {
-  color: #8293a9;
+  color: var(--color-text-muted);
   opacity: 1;
 }
 
 .agent-register__field input:focus {
-  border-color: #2476bd;
-  box-shadow: 0 0 0 4px rgb(36 118 189 / 16%);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-light);
 }
 
 /* Campo com erro fica com borda vermelha */
 .agent-register__field input[aria-invalid="true"] {
-  border-color: #d92d20;
+  border-color: var(--color-error);
 }
 
 .agent-register__field input[aria-invalid="true"]:focus {
-  box-shadow: 0 0 0 4px rgb(217 45 32 / 14%);
+  box-shadow: 0 0 0 4px var(--color-error-light);
 }
 
 /* ===== Senha com botão de olho ===== */
@@ -145,7 +152,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #1768b4;
+  color: var(--color-primary);
   cursor: pointer;
 }
 
@@ -161,19 +168,19 @@
 
 /* ===== Textos de apoio dentro dos campos ===== */
 .agent-register__optional {
-  color: #74869b;
+  color: var(--color-text-muted);
   font-weight: 400;
 }
 
 .agent-register__hint {
-  color: #74869b;
+  color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 400;
   line-height: 1.4;
 }
 
 .agent-register__error {
-  color: #b42318;
+  color: var(--color-error);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
@@ -209,8 +216,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #eaf3fc;
-  color: #0965b6;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 700;
 }
@@ -218,13 +225,13 @@
 .agent-register__step strong {
   display: block;
   margin-bottom: 2px;
-  color: #183858;
+  color: var(--color-text);
   font-size: 16px;
 }
 
 .agent-register__step p {
   margin: 0;
-  color: #5d7189;
+  color: var(--color-text-muted);
   font-size: 15px;
   line-height: 1.5;
 }
@@ -232,14 +239,14 @@
 /* ===== Privacidade e aceite ===== */
 .agent-register__text {
   margin: 0 0 12px;
-  color: #5d7189;
+  color: var(--color-text-muted);
   font-size: 15px;
   line-height: 1.6;
 }
 
 .agent-register__details {
   margin-bottom: 12px;
-  color: #5d7189;
+  color: var(--color-text-muted);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -248,7 +255,7 @@
   min-height: 44px; /* área de toque confortável */
   display: flex;
   align-items: center;
-  color: #0865b7;
+  color: var(--color-primary);
   font-weight: 650;
   cursor: pointer;
 }
@@ -257,7 +264,7 @@
   margin: 0 0 8px;
   padding: 12px 14px;
   border-radius: 8px;
-  background: #f4f8fc;
+  background: var(--color-hover);
 }
 
 .agent-register__consent {
@@ -265,7 +272,7 @@
   align-items: flex-start;
   gap: 12px;
   min-height: 44px;
-  color: #172f4b;
+  color: var(--color-text);
   font-size: 15px;
   line-height: 1.5;
   cursor: pointer;
@@ -276,15 +283,15 @@
   width: 22px;
   height: 22px;
   margin: 2px 0 0;
-  accent-color: #1768b4;
+  accent-color: var(--color-primary);
 }
 
 /* ===== Aviso de habilitação (notice) ===== */
 .agent-register__notice {
   padding: 18px 20px;
   border-radius: 10px;
-  background: #eaf3fc;
-  color: #1b3550;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 16px;
   line-height: 1.5;
 }
@@ -294,7 +301,7 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
-  color: #0965b6;
+  color: var(--color-primary);
 }
 
 .agent-register__notice-title strong {
@@ -326,8 +333,8 @@
   margin: 0 0 20px;
   padding: 12px 14px;
   border-radius: 8px;
-  background: #edf5fc;
-  color: #184f80;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 15px;
   line-height: 1.5;
 }
@@ -342,8 +349,8 @@
   padding: 12px 18px;
   border: 0;
   border-radius: 10px;
-  background: #2169ad;
-  color: #fff;
+  background: var(--color-primary);
+  color: white;
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
@@ -351,11 +358,11 @@
 }
 
 .agent-register__submit:hover:not(:disabled) {
-  background: #175a99;
+  background: var(--color-primary-hover);
 }
 
 .agent-register__submit:active:not(:disabled) {
-  background: #175a99;
+  background: var(--color-primary-hover);
   transform: translateY(1px);
 }
 
@@ -367,7 +374,7 @@
 /* ===== Dispositivo ===== */
 .agent-register__device {
   margin: 16px 0 0;
-  color: #74869b;
+  color: var(--color-text-muted);
   text-align: center;
   font-size: 13px;
 }
@@ -375,7 +382,7 @@
 /* ===== Link para login ===== */
 .agent-register__register {
   margin: 20px 0 4px;
-  color: #74869b;
+  color: var(--color-text-muted);
   text-align: center;
   font-size: 15px;
   line-height: 1.6;
@@ -386,7 +393,7 @@
   padding: 0 4px;
   border: 0;
   background: none;
-  color: #0865b7;
+  color: var(--color-primary);
   font: inherit;
   font-weight: 650;
   cursor: pointer;
@@ -408,8 +415,8 @@
   height: 56px;
   margin: 0 auto 16px;
   border-radius: 50%;
-  background: #e7f6ec;
-  color: #157f3d;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .agent-register__success-icon svg {
@@ -428,7 +435,7 @@
 
 .agent-register__success p {
   margin: 0 0 8px;
-  color: #5d7189;
+  color: var(--color-text-muted);
   font-size: 16px;
   line-height: 1.6;
 }

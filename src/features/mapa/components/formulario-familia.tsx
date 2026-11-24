@@ -4,9 +4,12 @@ import {
   useRef,
   useState,
   type FormEvent,
+  Fragment,
 } from 'react';
 import { FlaskConical, Save, Plus } from 'lucide-react';
 import PainelDialogo from './painel-dialogo';
+import { useIsTouchDevice } from '@/hooks/useDeviceType';
+import BiometricPrompt from '@/components/auth/BiometricPrompt';
 import SecaoInformacaoImovel from './SecaoInformacaoImovel';
 import SecaoCaracterizacaoImovel from './SecaoCaracterizacaoImovel';
 import SecaoCondicoesHabitabilidade from './SecaoCondicoesHabitabilidade';
@@ -19,13 +22,9 @@ import SecaoVistorias from './SecaoVistorias';
 import SecaoSituacaoAtual from './SecaoSituacaoAtual';
 import SecaoDocumentosFotograficos from './SecaoDocumentosFotograficos';
 import CamposPessoaCompleta from './CamposPessoaCompleta';
-import {
-  ESTILOS_RISCO,
-  type NivelRisco,
-} from '@/features/mapa/lib/pontos';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import {
   FORMULARIO_VAZIO,
-  TIPOS_OCORRENCIA,
   exemploCadastro,
   formatarCpf,
   gerarIdentificador,
@@ -34,7 +33,6 @@ import {
   type CamposCadastro,
   type DadosFamilia,
   type ErrosCadastro,
-  type TipoOcorrencia,
   type InformacaoImovel,
   type CaracterizacaoImovel,
   type CondicoesHabitabilidade,
@@ -51,25 +49,41 @@ import {
   type MembroFamilia,
 } from '@/features/mapa/lib/familias';
 
+interface FormularioFamiliaProps {
+  aberto: boolean;
+  demonstracao: boolean;
+  aoFechar: () => void;
+  aoSalvar: (dados: DadosFamilia, chave: string) => Promise<void>;
+  /** On mobile: keep form open after successful save (clear for next registration) */
+  mobileKeepOpen?: boolean;
+}
+
 export default function FormularioFamilia({
   aberto,
   demonstracao,
   aoFechar,
   aoSalvar,
-}: {
-  aberto: boolean;
-  demonstracao: boolean;
-  aoFechar: () => void;
-  aoSalvar: (dados: DadosFamilia, chave: string) => Promise<void>;
-}) {
+  mobileKeepOpen = false,
+}: FormularioFamiliaProps) {
   const [campos, setCampos] = useState<CamposCadastro>({ ...FORMULARIO_VAZIO });
   const [erros, setErros] = useState<ErrosCadastro>({});
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState('');
   const [consentimentoDemo, setConsentimentoDemo] = useState(false);
+  const [biometricPromptAberto, setBiometricPromptAberto] = useState(false);
+  const [etapaAtiva, setEtapaAtiva] = useState(0);
+  const etapas = [
+    'Imóvel',
+    'Caracterização',
+    'Habitabilidade',
+    'Família',
+    'Histórico',
+    'Documentos',
+  ];
   const enviandoRef = useRef(false);
   const chave = useRef('');
   const formulario = useRef<HTMLFormElement>(null);
+  const isTouchDevice = useIsTouchDevice();
   useEffect(
     () => () => {
       // Cleanup: do NOT increment gpsTentativa here.
@@ -120,6 +134,17 @@ export default function FormularioFamilia({
       );
       return;
     }
+
+    // On mobile/tablet, require biometric authentication before saving
+    if (isTouchDevice && !demonstracao) {
+      setBiometricPromptAberto(true);
+      return;
+    }
+
+    await executarSalvamento();
+  }
+
+  async function executarSalvamento() {
     enviandoRef.current = true;
     setEnviando(true);
     try {
@@ -128,7 +153,11 @@ export default function FormularioFamilia({
       setCampos({ ...FORMULARIO_VAZIO });
       setConsentimentoDemo(false);
       chave.current = '';
-      aoFechar();
+      setEtapaAtiva(0);
+      // On mobile with mobileKeepOpen, keep form open for next registration
+      if (!mobileKeepOpen) {
+        aoFechar();
+      }
     } catch (erro) {
       setErroEnvio(
         erro instanceof Error
@@ -140,6 +169,19 @@ export default function FormularioFamilia({
       setEnviando(false);
     }
   }
+
+  const aoBiometriaSucesso = useCallback(() => {
+    executarSalvamento();
+  }, []);
+
+  const aoBiometriaErro = useCallback((erro: string) => {
+    setErroEnvio(erro);
+    setBiometricPromptAberto(false);
+  }, []);
+
+  const aoBiometriaFechar = useCallback(() => {
+    setBiometricPromptAberto(false);
+  }, []);
   const ajuda = (campo: keyof CamposCadastro) =>
     erros[campo] ? (
       <span id={`erro-${campo}`} className="erro-campo">
@@ -154,6 +196,9 @@ export default function FormularioFamilia({
   // Handlers para as novas seções
   const alterarInformacaoImovel = useCallback((dados: InformacaoImovel) => {
     alterar('informacaoImovel', dados);
+    if (dados.grauRisco === 'Alto') alterar('nivelRisco', 'alto');
+    if (dados.grauRisco === 'Médio') alterar('nivelRisco', 'medio');
+    if (dados.grauRisco === 'Baixo') alterar('nivelRisco', 'baixo');
   }, []);
 
   const alterarCaracterizacaoImovel = useCallback((dados: CaracterizacaoImovel) => {
@@ -238,14 +283,21 @@ export default function FormularioFamilia({
   }, [alterarDemaisMembros, alterar]);
 
   return (
-    <PainelDialogo
-      id="cadastro"
-      aberto={aberto}
-      aoFechar={aoFechar}
-      titulo="Cadastrar família"
-      subtitulo="Identifique a família, seus integrantes e a residência. Preencha todas as seções conforme o modelo oficial."
-      ocupado={enviando}
-      rodape={(fechar) => (
+    <Fragment>
+      <PainelDialogo
+        id="cadastro"
+        aberto={aberto}
+        aoFechar={aoFechar}
+        titulo="Cadastrar família"
+        subtitulo="Identifique a família, seus integrantes e a residência. Preencha todas as seções conforme o modelo oficial."
+        ocupado={enviando}
+        mostrarFechar={!mobileKeepOpen}
+        acoesCabecalho={mobileKeepOpen ? (
+          <div className="theme-toggle-mobile">
+            <ThemeToggle />
+          </div>
+        ) : undefined}
+        rodape={(fechar) => (
         <>
           <span className="nota-rodape">
             {demonstracao
@@ -253,11 +305,37 @@ export default function FormularioFamilia({
               : 'Envio para a API da equipe'}
           </span>
           <div>
-            <button type="button" onClick={fechar} disabled={enviando}>
-              Voltar ao mapa
-            </button>
+            <div className="navegacao-etapas-rodape">
+              <button
+                type="button"
+                disabled={etapaAtiva === 0 || enviando}
+                onClick={() => setEtapaAtiva((etapa) => Math.max(0, etapa - 1))}
+              >
+                Anterior
+              </button>
+              {etapaAtiva < etapas.length - 1 && (
+                <button
+                  type="button"
+                  className="botao-primario"
+                  disabled={enviando}
+                  onClick={() => {
+                    setEtapaAtiva((etapa) => Math.min(etapas.length - 1, etapa + 1));
+                    document
+                      .querySelector('.corpo-dialogo')
+                      ?.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  Próxima etapa
+                </button>
+              )}
+            </div>
+            {!mobileKeepOpen && (
+              <button type="button" onClick={fechar} disabled={enviando}>
+                Voltar ao mapa
+              </button>
+            )}
             <button
-              className="botao-primario"
+              className="botao-primario botao-adicionar-demonstracao"
               type="submit"
               form="formulario-familia"
               disabled={enviando}
@@ -313,31 +391,50 @@ export default function FormularioFamilia({
           </p>
         )}
 
-        {/* Seção 1: Informação do Imóvel */}
+        <nav className="etapas-cadastro" aria-label="Etapas do cadastro">
+          {etapas.map((etapa, indice) => (
+            <button
+              key={etapa}
+              type="button"
+              className={indice === etapaAtiva ? 'etapa-ativa' : ''}
+              aria-current={indice === etapaAtiva ? 'step' : undefined}
+              onClick={() => setEtapaAtiva(indice)}
+            >
+              <span>{indice + 1}</span>
+              {etapa}
+            </button>
+          ))}
+        </nav>
+
+        <div className="conteudo-etapa" data-etapa={etapaAtiva}>
+        {etapaAtiva === 0 ? (
         <SecaoInformacaoImovel
           dados={campos.informacaoImovel}
           aoAlterar={alterarInformacaoImovel}
           erros={erros.informacaoImovel as any}
           apenasLeitura={enviando}
         />
+        ) : null}
 
-        {/* Seção 2: Caracterização do Imóvel */}
+        {etapaAtiva === 1 ? (
         <SecaoCaracterizacaoImovel
           dados={campos.caracterizacaoImovel}
           aoAlterar={alterarCaracterizacaoImovel}
           erros={erros.caracterizacaoImovel as any}
           apenasLeitura={enviando}
         />
+        ) : null}
 
-        {/* Seção 3: Condições de Habitabilidade */}
+        {etapaAtiva === 2 ? (
         <SecaoCondicoesHabitabilidade
           dados={campos.condicoesHabitabilidade}
           aoAlterar={alterarCondicoesHabitabilidade}
           erros={erros.condicoesHabitabilidade as any}
           apenasLeitura={enviando}
         />
+        ) : null}
 
-        {/* Seção 4: Responsável pelo Imóvel e Composição Familiar */}
+        {etapaAtiva === 3 ? (
         <fieldset disabled={enviando}>
           <legend>
             <span>4</span>Responsável pelo Imóvel e Composição Familiar
@@ -427,8 +524,10 @@ export default function FormularioFamilia({
             )}
           </div>
         </fieldset>
+        ) : null}
 
-        {/* Seção 5: Histórico e Evolução */}
+        {etapaAtiva === 4 ? (
+        <Fragment>
         <SecaoHistoricoOcorrencias
           dados={campos.historicoOcorrencias}
           aoAlterar={alterarHistoricoOcorrencias}
@@ -477,89 +576,36 @@ export default function FormularioFamilia({
           erros={erros.situacaoAtual as any}
           apenasLeitura={enviando}
         />
+        </Fragment>
+        ) : null}
 
-        {/* Seção 6: Documentos e Registro Fotográfico */}
-        <SecaoDocumentosFotograficos
-          dados={campos.documentosFotograficos}
-          aoAlterar={alterarDocumentosFotograficos}
-          erros={erros.documentosFotograficos as any}
-          apenasLeitura={enviando}
-        />
-
-        {/* Seção 7: Vulnerabilidade informada (Classificação de Risco) */}
-        <fieldset disabled={enviando}>
-          <legend>
-            <span>7</span>Vulnerabilidade informada (Classificação de Risco)
-          </legend>
-          <p className="ajuda-secao">
-            Registre a avaliação da equipe. O sistema não calcula risco
-            automaticamente.
-          </p>
-          <div
-            className="opcoes-risco"
-            role="group"
-            aria-label="Nível de risco"
-          >
-            {(['baixo', 'medio', 'alto', 'nao_informado'] as NivelRisco[]).map(
-              (nivel) => (
-                <label
-                  key={nivel}
-                  className="opcao-risco"
-                  data-selecionado={campos.nivelRisco === nivel}
-                >
-                  <input
-                    type="radio"
-                    name="nivelRisco"
-                    value={nivel}
-                    checked={campos.nivelRisco === nivel}
-                    onChange={() => alterar('nivelRisco', nivel)}
-                  />
-                  <span
-                    className="amostra"
-                    style={{ background: ESTILOS_RISCO[nivel].cor }}
-                    aria-hidden="true"
-                  >
-                    {ESTILOS_RISCO[nivel].letra}
-                  </span>
-                  {ESTILOS_RISCO[nivel].rotulo}
-                </label>
-              ),
-            )}
-          </div>
-          {ajuda('nivelRisco')}
-          <label className="campo">
-            Tipo de ocorrência
-            <select
-              name="tipoOcorrencia"
-              value={campos.tipoOcorrencia}
-              onChange={(e) =>
-                alterar('tipoOcorrencia', e.target.value as TipoOcorrencia)
-              }
-              {...propsCampo('tipoOcorrencia')}
-            >
-              {Object.entries(TIPOS_OCORRENCIA).map(([id, nome]) => (
-                <option value={id} key={id}>
-                  {nome}
-                </option>
-              ))}
-            </select>
-            {ajuda('tipoOcorrencia')}
-          </label>
-          <label className="campo">
-            Observações gerais <span className="opcional">(opcional)</span>
-            <textarea
-              name="observacoes"
-              rows={3}
-              maxLength={1000}
-              placeholder="Informações úteis para a próxima visita."
-              value={campos.observacoes}
-              onChange={(e) => alterar('observacoes', e.target.value)}
-              {...propsCampo('observacoes')}
-            />
-            <small>{campos.observacoes.length}/1.000 caracteres</small>
-            {ajuda('observacoes')}
-          </label>
-        </fieldset>
+        {etapaAtiva === 5 ? (
+        <Fragment>
+          <SecaoDocumentosFotograficos
+            dados={campos.documentosFotograficos}
+            aoAlterar={alterarDocumentosFotograficos}
+            erros={erros.documentosFotograficos as any}
+            apenasLeitura={enviando}
+          />
+          <fieldset disabled={enviando}>
+            <legend>
+              Observações gerais
+            </legend>
+            <label className="campo">
+              Observações gerais <span className="opcional">(opcional)</span>
+              <textarea
+                name="observacoes"
+                rows={3}
+                maxLength={1000}
+                placeholder="Informações úteis para a próxima visita."
+                value={campos.observacoes}
+                onChange={(e) => alterar('observacoes', e.target.value)}
+                {...propsCampo('observacoes')}
+              />
+              <small>{campos.observacoes.length}/1.000 caracteres</small>
+              {ajuda('observacoes')}
+            </label>
+          </fieldset>
 
         {demonstracao && (
           <label className="confirmacao-demo">
@@ -577,7 +623,22 @@ export default function FormularioFamilia({
             {erroEnvio}
           </p>
         )}
+        </Fragment>
+        ) : null}
+        </div>
+
       </form>
     </PainelDialogo>
+
+    {/* Biometric Authentication Prompt - Only on mobile/tablet */}
+    <BiometricPrompt
+      isOpen={biometricPromptAberto}
+      onClose={aoBiometriaFechar}
+      onSuccess={aoBiometriaSucesso}
+      onError={aoBiometriaErro}
+      title="Confirmar cadastro"
+      description="Para segurança, autentique-se com sua digital ou face ID antes de salvar o cadastro."
+    />
+  </Fragment>
   );
 }

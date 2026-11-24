@@ -1,20 +1,24 @@
 /* ============================================================
    VISUALIZAÇÃO DE FAMÍLIA - CARD COLAPSÁVEL COM ACORDEÃO
-   Usa variáveis CSS do tema do projeto (mapa.css):
-   --azul: #126bd3, --marinho: #102e50, --texto: #173453,
-   --secundario: #53657e, --borda: #dce4ed, --fundo: #f1f5f8
+   Usa variáveis CSS globais do tema (index.css):
+   --color-bg, --color-text, --color-text-muted, --color-primary,
+   --color-primary-light, --color-primary-hover, --color-border,
+   --color-border-light, --color-card, --color-card-hover,
+   --color-hover, --color-shadow, --color-success, --color-success-bg,
+   --color-success-border, --color-error, --color-error-bg,
+   --color-error-border, --color-warning, --color-warning-bg
    ============================================================ */
 
 .visualizacao-familia {
   width: 100%;
   max-width: 720px;
-  background: var(--fundo, #f1f5f8);
+  background: var(--color-bg);
   border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(16, 46, 80, 0.1), 0 8px 10px -6px rgba(16, 46, 80, 0.05);
+  box-shadow: 0 10px 25px -5px var(--color-shadow), 0 8px 10px -6px var(--color-shadow);
   overflow: hidden;
-  border: 1px solid var(--borda, #dce4ed);
+  border: 1px solid var(--color-border);
   font-family: 'Montserrat', sans-serif;
-  color: var(--texto, #173453);
+  color: var(--color-text);
 }
 
 .visualizacao-familia.vazia {
@@ -29,7 +33,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  color: var(--secundario, #53657e);
+  color: var(--color-text-muted);
   text-align: center;
   padding: 32px;
 }
@@ -45,8 +49,8 @@
 .card-colapsado {
   width: 100%;
   padding: 20px;
-  background: #fff;
-  border: 1px solid var(--borda, #dce4ed);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -57,13 +61,13 @@
 }
 
 .card-colapsado:hover {
-  background: #f5f9fe;
-  border-color: var(--azul, #126bd3);
-  box-shadow: 0 2px 8px rgba(18, 107, 211, 0.1);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(26, 95, 180, 0.1);
 }
 
 .card-colapsado:focus-visible {
-  outline: 2px solid var(--azul, #126bd3);
+  outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
 
@@ -92,7 +96,7 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--texto, #173453);
+  color: var(--color-text);
   line-height: 1.3;
 }
 
@@ -119,13 +123,13 @@
   align-items: center;
   gap: 8px;
   font-size: 0.875rem;
-  color: var(--secundario, #53657e);
+  color: var(--color-text-muted);
   line-height: 1.5;
 }
 
 .info-item svg {
   flex-shrink: 0;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .card-acoes {
@@ -143,45 +147,45 @@
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
-  border: 1px solid var(--borda, #dce4ed);
-  background: #fff;
-  color: var(--texto, #173453);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text);
   cursor: pointer;
   transition: all 150ms ease;
   white-space: nowrap;
 }
 
 .botao-acao:hover {
-  background: #e5e7eb;
-  border-color: var(--azul, #126bd3);
+  background: var(--color-hover);
+  border-color: var(--color-primary);
 }
 
 .botao-acao.primario {
-  background: var(--azul, #126bd3);
-  border-color: var(--azul, #126bd3);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: white;
 }
 
 .botao-acao.primario:hover {
-  background: #0958b3;
-  border-color: #0958b3;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .botao-acao.fechar {
   padding: 8px;
   border-color: transparent;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .botao-acao.fechar:hover {
-  background: #fff6f6;
-  color: #dc2626;
+  background: var(--color-error-bg);
+  color: var(--color-error);
 }
 
 .chevron-expandir {
   width: 24px;
   height: 24px;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   transition: transform 200ms ease;
   flex-shrink: 0;
 }
@@ -197,8 +201,8 @@
 .conteudo-expandido-wrapper {
   overflow: hidden;
   transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  border-top: 1px solid var(--borda, #dce4ed);
-  background: #f8fafc;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-primary-light);
 }
 
 .conteudo-expandido {
@@ -225,17 +229,17 @@
    ============================================================ */
 
 .secao-expandida {
-  background: #fff;
+  background: var(--color-card);
   border-radius: 8px;
-  border: 1px solid var(--borda, #dce4ed);
+  border: 1px solid var(--color-border);
   overflow: hidden;
   transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .secao-expandida:hover {
-  background: #f5f9fe;
-  border-color: var(--azul, #126bd3);
-  box-shadow: 0 2px 8px rgba(18, 107, 211, 0.08);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(26, 95, 180, 0.08);
 }
 
 .secao-titulo {
@@ -246,13 +250,13 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--texto, #173453);
-  background: #f3f6fa;
-  border-bottom: 1px solid var(--borda, #dce4ed);
+  color: var(--color-text);
+  background: var(--color-hover);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .secao-titulo svg {
-  color: var(--azul, #126bd3);
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -273,7 +277,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .campo-item:last-child {
@@ -289,7 +293,7 @@
   margin: 0;
   padding-left: 20px;
   list-style: disc;
-  color: var(--secundario, #53657e);
+  color: var(--color-text-muted);
 }
 
 .campo-item.lista-documentos li {
@@ -304,9 +308,9 @@
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   border-radius: 6px;
-  background: #f3f6fa;
+  background: var(--color-hover);
 }
 
 .campo-label {
@@ -314,7 +318,7 @@
   min-width: 160px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--secundario, #53657e);
+  color: var(--color-text-muted);
   line-height: 1.5;
 }
 
@@ -322,7 +326,7 @@
   flex: 1;
   min-width: 0;
   font-size: 0.875rem;
-  color: var(--texto, #173453);
+  color: var(--color-text);
   line-height: 1.5;
   word-break: break-word;
 }
@@ -332,26 +336,26 @@
    ============================================================ */
 
 .membro-card {
-  background: #f3f6fa;
+  background: var(--color-hover);
   border-radius: 8px;
   padding: 16px;
-  border: 1px solid var(--borda, #dce4ed);
+  border: 1px solid var(--color-border);
   transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .membro-card:hover {
-  background: #f5f9fe;
-  border-color: var(--azul, #126bd3);
-  box-shadow: 0 2px 8px rgba(18, 107, 211, 0.08);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(26, 95, 180, 0.08);
 }
 
 .membro-titulo {
   margin: 0 0 12px;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--azul, #126bd3);
+  font-weight: 600
+  color: var(--color-primary);
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--borda, #dce4ed);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .membro-campos {
@@ -368,7 +372,7 @@
   margin: 0 0 12px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--secundario, #53657e);
+  color: var(--color-text-muted);
 }
 
 .comodos-grid {
@@ -382,23 +386,23 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #fff;
-  border: 1px solid var(--borda, #dce4ed);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.875rem;
   transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .comodo-item:hover {
-  background: #f5f9fe;
-  border-color: var(--azul, #126bd3);
-  box-shadow: 0 2px 8px rgba(18, 107, 211, 0.08);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(26, 95, 180, 0.08);
 }
 
 .comodo-qtd {
   font-weight: 600;
-  color: var(--azul, #126bd3);
-  background: #edf5ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   padding: 2px 8px;
   border-radius: 9999px;
   font-size: 0.75rem;
@@ -409,18 +413,18 @@
    ============================================================ */
 
 .ocorrencia-item {
-  background: #f3f6fa;
+  background: var(--color-hover);
   border-radius: 8px;
   padding: 16px;
-  border: 1px solid var(--borda, #dce4ed);
+  border: 1px solid var(--color-border);
   margin-bottom: 12px;
   transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .ocorrencia-item:hover {
-  background: #f5f9fe;
-  border-color: var(--azul, #126bd3);
-  box-shadow: 0 2px 8px rgba(18, 107, 211, 0.08);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(26, 95, 180, 0.08);
 }
 
 .ocorrencia-item:last-child {
@@ -431,9 +435,9 @@
   margin: 0 0 12px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--texto, #173453);
+  color: var(--color-text);
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--borda, #dce4ed);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .ocorrencia-campos {
@@ -512,151 +516,6 @@
 }
 
 /* ============================================================
-   MODO ESCURO (usa prefers-color-scheme)
-   Mantemos o tema claro para este componente para garantir
-   legibilidade e consistência visual conforme solicitado.
-   ============================================================ */
-
-@media (prefers-color-scheme: dark) {
-  .visualizacao-familia {
-    background: var(--fundo, #f1f5f8);
-    border-color: var(--borda, #dce4ed);
-    box-shadow: 0 10px 25px -5px rgba(16, 46, 80, 0.1), 0 8px 10px -6px rgba(16, 46, 80, 0.05);
-  }
-
-  .card-colapsado {
-    background: #fff;
-    border-color: var(--borda, #dce4ed);
-  }
-
-  .card-colapsado:hover {
-    background: #f5f9fe;
-    border-color: var(--azul, #126bd3);
-    box-shadow: 0 2px 8px rgba(18, 107, 211, 0.1);
-  }
-
-  .nome-representante {
-    color: var(--texto, #173453);
-  }
-
-  .info-item {
-    color: var(--secundario, #53657e);
-  }
-
-  .info-item svg {
-    color: #9ca3af;
-  }
-
-  .botao-acao {
-    background: #fff;
-    border-color: var(--borda, #dce4ed);
-    color: var(--texto, #173453);
-  }
-
-  .botao-acao:hover {
-    background: #e5e7eb;
-    border-color: var(--azul, #126bd3);
-  }
-
-  .botao-acao.primario {
-    background: var(--azul, #126bd3);
-    border-color: var(--azul, #126bd3);
-    color: #fff;
-  }
-
-  .botao-acao.primario:hover {
-    background: #0958b3;
-    border-color: #0958b3;
-  }
-
-  .botao-acao.fechar:hover {
-    background: #fff6f6;
-    color: #dc2626;
-  }
-
-  .conteudo-expandido-wrapper {
-    border-top-color: var(--borda, #dce4ed);
-    background: #f8fafc;
-  }
-
-  .secao-expandida {
-    background: #fff;
-    border-color: var(--borda, #dce4ed);
-  }
-
-  .secao-expandida:hover {
-    background: #f5f9fe;
-    border-color: var(--azul, #126bd3);
-    box-shadow: 0 2px 8px rgba(18, 107, 211, 0.08);
-  }
-
-  .secao-titulo {
-    color: var(--texto, #173453);
-    background: #f3f6fa;
-    border-bottom-color: var(--borda, #dce4ed);
-  }
-
-  .secao-titulo svg {
-    color: var(--azul, #126bd3);
-  }
-
-  .campo-item {
-    border-bottom-color: #f3f4f6;
-  }
-
-  .campo-label {
-    color: var(--secundario, #53657e);
-  }
-
-  .campo-valor {
-    color: var(--texto, #173453);
-  }
-
-  .campo-icone {
-    color: #9ca3af;
-    background: #f3f6fa;
-  }
-
-  .membro-card {
-    background: #f3f6fa;
-    border-color: var(--borda, #dce4ed);
-  }
-
-  .membro-titulo {
-    color: var(--azul, #126bd3);
-    border-bottom-color: var(--borda, #dce4ed);
-  }
-
-  .comodo-item {
-    background: #fff;
-    border-color: var(--borda, #dce4ed);
-  }
-
-  .comodo-qtd {
-    background: #edf5ff;
-    color: var(--azul, #126bd3);
-  }
-
-  .ocorrencia-item {
-    background: #f3f6fa;
-    border-color: var(--borda, #dce4ed);
-  }
-
-  .ocorrencia-item h5 {
-    color: var(--texto, #173453);
-    border-bottom-color: var(--borda, #dce4ed);
-  }
-
-  .secao-sub-lista h5 {
-    color: var(--secundario, #53657e);
-  }
-
-  .campo-item.lista-documentos li {
-    color: var(--secundario, #53657e);
-  }
-}
-
-/* ============================================================
    ACESSIBILIDADE
    ============================================================ */
 
@@ -674,7 +533,7 @@
 /* Foco visível para navegação por teclado */
 .card-colapsado:focus-visible,
 .botao-acao:focus-visible {
-  outline: 2px solid var(--azul, #126bd3);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -703,7 +562,7 @@
 @media print {
   .visualizacao-familia {
     box-shadow: none;
-    border: 1px solid #000;
+    border: 1px solid var(--color-border);
     break-inside: avoid;
     page-break-inside: avoid;
   }

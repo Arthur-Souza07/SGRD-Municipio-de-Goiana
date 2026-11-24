@@ -13,8 +13,8 @@ html {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  color: #102f52;
+  background: var(--color-bg);
+  color: var(--color-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
@@ -28,8 +28,8 @@ html {
   padding: 16px 32px;
   padding-left: max(32px, env(safe-area-inset-left));
   padding-right: max(32px, env(safe-area-inset-right));
-  background: #eef4fa;
-  border-bottom: 1px solid #dce5ee;
+  background: var(--color-hover);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .agent-site-header__brand {
@@ -39,26 +39,26 @@ html {
 }
 
 .agent-site-header__org {
-  color: #5d7189;
+  color: var(--color-text-muted);
   font-size: 13px;
   line-height: 1.3;
 }
 
 .agent-site-header__name {
-  color: #12365b;
+  color: var(--color-text);
   font-size: 22px;
   line-height: 1.2;
   font-weight: 750;
 }
 
 .agent-site-header__tagline {
-  color: #5d7189;
+  color: var(--color-text-muted);
   font-size: 13px;
   line-height: 1.3;
 }
 
 .agent-site-header__role {
-  color: #12365b;
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
@@ -84,7 +84,7 @@ html {
 
 .agent-login__eyebrow {
   margin: 0 0 10px;
-  color: #2588d8;
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 750;
   letter-spacing: 0.025em;
@@ -92,7 +92,7 @@ html {
 
 .agent-login__header h1 {
   margin: 0;
-  color: #12365b;
+  color: var(--color-text);
   font-size: 36px;
   line-height: 1.2;
   font-weight: 750;
@@ -100,7 +100,7 @@ html {
 
 .agent-login__description {
   margin: 12px 0 0;
-  color: #6f8197;
+  color: var(--color-text-muted);
   font-size: 17px;
   line-height: 1.6;
 }
@@ -120,15 +120,15 @@ html {
 .agent-login__card {
   min-width: 0;
   padding: 28px;
-  background: #fff;
-  border: 1px solid #dce5ee;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+  box-shadow: 0 8px 24px var(--color-shadow);
 }
 
 .agent-login__card h2 {
   margin: 0 0 20px;
-  color: #183858;
+  color: var(--color-text);
   font-size: 24px;
   line-height: 1.35;
   font-weight: 500;
@@ -139,7 +139,7 @@ html {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 20px;
-  color: #172f4b;
+  color: var(--color-text);
   font-size: 16px;
   font-weight: 500;
 }
@@ -149,24 +149,24 @@ html {
   min-width: 0;
   height: 56px;
   padding: 0 16px;
-  border: 1px solid #d5e0ec;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   outline: none;
-  background: #fff;
-  color: #172f4b;
+  background: var(--color-card);
+  color: var(--color-text);
   font: inherit;
   font-size: 16px; /* 16px evita zoom automático no iPad */
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .agent-login__field input::placeholder {
-  color: #8293a9;
+  color: var(--color-text-muted);
   opacity: 1;
 }
 
 .agent-login__field input:focus {
-  border-color: #2476bd;
-  box-shadow: 0 0 0 4px rgb(36 118 189 / 16%);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-light);
 }
 
 .agent-login__password {
@@ -191,7 +191,7 @@ html {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #1768b4;
+  color: var(--color-primary);
   cursor: pointer;
 }
 
@@ -220,7 +220,7 @@ html {
   align-items: center;
   gap: 10px;
   min-height: 44px; /* área de toque confortável */
-  color: #1768b4;
+  color: var(--color-primary);
   cursor: pointer;
 }
 
@@ -228,7 +228,7 @@ html {
   width: 22px;
   height: 22px;
   margin: 0;
-  accent-color: #1768b4;
+  accent-color: var(--color-primary);
 }
 
 .agent-login__text-button,
@@ -237,7 +237,7 @@ html {
   padding: 0 4px;
   border: 0;
   background: none;
-  color: #0865b7;
+  color: var(--color-primary);
   font: inherit;
   font-weight: 650;
   cursor: pointer;
@@ -257,8 +257,8 @@ html {
   padding: 12px 18px;
   border: 0;
   border-radius: 10px;
-  background: #2169ad;
-  color: #fff;
+  background: var(--color-primary);
+  color: white;
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
@@ -266,11 +266,11 @@ html {
 }
 
 .agent-login__submit:hover {
-  background: #175a99;
+  background: var(--color-primary-hover);
 }
 
 .agent-login__submit:active {
-  background: #175a99;
+  background: var(--color-primary-hover);
   transform: translateY(1px);
 }
 
@@ -278,22 +278,22 @@ html {
   margin: 0 0 20px;
   padding: 12px 14px;
   border-radius: 8px;
-  background: #edf5fc;
-  color: #184f80;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 15px;
   line-height: 1.5;
 }
 
 .agent-login__device {
   margin: 16px 0 0;
-  color: #74869b;
+  color: var(--color-text-muted);
   text-align: center;
   font-size: 13px;
 }
 
 .agent-login__register {
   margin: 20px 0 4px;
-  color: #74869b;
+  color: var(--color-text-muted);
   text-align: center;
   font-size: 15px;
   line-height: 1.6;
@@ -302,8 +302,8 @@ html {
 .agent-login__notice {
   padding: 18px 20px;
   border-radius: 10px;
-  background: #eaf3fc;
-  color: #1b3550;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 16px;
   line-height: 1.5;
 }
@@ -313,7 +313,7 @@ html {
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
-  color: #0965b6;
+  color: var(--color-primary);
 }
 
 .agent-login__notice-title strong {
@@ -334,13 +334,13 @@ html {
 .agent-site-footer {
   padding: 20px 24px;
   padding-bottom: max(20px, env(safe-area-inset-bottom));
-  border-top: 1px solid #dce5ee;
+  border-top: 1px solid var(--color-border);
   text-align: center;
 }
 
 .agent-site-footer p {
   margin: 0;
-  color: #74869b;
+  color: var(--color-text-muted);
   font-size: 13px;
   line-height: 1.7;
 }

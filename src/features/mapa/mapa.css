@@ -1,10 +1,10 @@
 .modulo-mapa {
-  --azul: #126bd3;
-  --marinho: #102e50;
-  --texto: #173453;
-  --secundario: #53657e;
-  --borda: #dce4ed;
-  --fundo: #f1f5f8;
+  --azul: var(--color-primary);
+  --marinho: var(--color-sidebar-bg);
+  --texto: var(--color-text);
+  --secundario: var(--color-text-muted);
+  --borda: var(--color-border);
+  --fundo: var(--color-bg);
   --movimento: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -49,17 +49,17 @@
   gap: 8px;
   min-height: 44px;
   padding: 9px 13px;
-  border: 1px solid #cad6e4;
+  border: 1px solid var(--color-border);
   border-radius: 7px;
   color: var(--texto);
-  background: #fff;
+  background: var(--color-card);
   font-size: 12px;
   font-weight: 600;
 }
 :where(.modulo-mapa) button:hover:not(:disabled) {
   border-color: var(--azul);
-  color: #0958b3;
-  background: #f1f7ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 :where(.modulo-mapa) button {
   transition:
@@ -72,7 +72,7 @@
   transform: translateY(1px);
 }
 :where(.modulo-mapa) :focus-visible {
-  outline: 3px solid #f4bb24;
+  outline: 3px solid var(--color-secondary);
   outline-offset: 3px;
 }
 :where(.modulo-mapa) .pular-conteudo {
@@ -82,7 +82,7 @@
   z-index: 3000;
   padding: 15px 20px;
   border-radius: 7px;
-  background: #fff;
+  background: var(--color-card);
   color: var(--marinho);
   transform: translateY(-160%);
 }
@@ -96,38 +96,44 @@
 :where(.modulo-mapa) .barra-lateral {
   position: sticky;
   top: 0;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   flex: 0 0 236px;
   height: 100dvh;
-  padding: 28px 18px 0;
+  padding: 22px 14px 0;
   background: var(--marinho);
-  color: #fff;
-  border-top: 5px solid var(--azul);
+  color: var(--color-sidebar-text);
+  border-top: 0;
+  border-right: 0;
+  box-shadow: 14px 0 28px -10px rgba(0, 0, 0, 0.42);
 }
 :where(.modulo-mapa) .marca-prefeitura {
   align-self: flex-start;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 158px;
-  height: 88px;
-  margin: 0 8px 28px;
-  padding: 6px 8px;
-  background: #fff;
+  width: 208px;
+  height: 112px;
+  margin: 0 0 18px;
+  padding: 5px 8px;
+  background: var(--color-card);
   border-radius: 7px;
 }
 :where(.modulo-mapa) .marca-prefeitura img {
   display: block;
-  width: 142px;
-  height: 76px;
+  width: 192px;
+  height: 102px;
   object-fit: contain;
 }
 :where(.modulo-mapa) .identidade-sistema {
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 0 8px;
+  padding: 12px 10px;
+  border: 1px solid var(--color-sidebar-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
 }
 :where(.modulo-mapa) .icone-defesa {
   display: flex;
@@ -136,8 +142,8 @@
   flex-shrink: 0;
   width: 43px;
   height: 46px;
-  border: 1px solid #446380;
-  background: #1d4166;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.10);
   border-radius: 9px;
 }
 :where(.modulo-mapa) .identidade-sistema div {
@@ -147,7 +153,7 @@
 }
 :where(.modulo-mapa) .identidade-sistema span:not(.icone-defesa) {
   font-size: 10px;
-  color: #c5d6e9;
+  color: var(--color-sidebar-text-muted);
 }
 :where(.modulo-mapa) .identidade-sistema strong {
   font-size: 20px;
@@ -155,17 +161,17 @@
   letter-spacing: -0.6px;
 }
 :where(.modulo-mapa) .descricao-sistema {
-  color: #c5d6e9;
+  color: var(--color-sidebar-text-muted);
   font-size: 11px;
   line-height: 1.8;
-  padding: 0 8px 25px;
-  margin: 17px 0 28px;
-  border-bottom: 1px solid #34516e;
+  padding: 0 10px 20px;
+  margin: 14px 0 20px;
+  border-bottom: 1px solid var(--color-sidebar-border);
 }
 :where(.modulo-mapa) .titulo-navegacao {
   display: block;
-  margin-bottom: 13px;
-  color: #bdcfe3;
+  margin: 0 10px 10px;
+  color: var(--color-sidebar-text-muted);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -174,13 +180,14 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  min-height: 51px;
-  border-radius: 7px;
-  padding: 13px 12px;
+  min-height: 50px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 12px 12px;
   text-decoration: none;
-  color: #fff;
-  background: #254f79;
-  box-shadow: inset 3px 0 #57adff;
+  color: var(--color-sidebar-text);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 3px 0 var(--color-secondary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -188,17 +195,32 @@
   margin-left: auto;
 }
 :where(.modulo-mapa) .navegacao a:hover {
-  background: #2d5b88;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.12);
+}
+:where(.modulo-mapa) .tema-lateral {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-sidebar-border);
+}
+:where(.modulo-mapa) .tema-lateral .theme-toggle {
+  width: 100%;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-sidebar-text);
 }
 :where(.modulo-mapa) .base-lateral {
   margin-top: auto;
-  padding-top: 40px;
+  padding-top: 20px;
 }
 :where(.modulo-mapa) .aviso-demonstracao {
   padding: 15px 13px;
   margin-bottom: 24px;
-  border-radius: 9px;
-  background: #1d4166;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
 }
 :where(.modulo-mapa) .aviso-demonstracao strong {
   display: flex;
@@ -208,7 +230,7 @@
 }
 :where(.modulo-mapa) .aviso-demonstracao p {
   margin: 10px 0 0;
-  color: #c5d6e9;
+  color: var(--color-sidebar-text-muted);
   font-size: 11px;
   line-height: 1.8;
 }
@@ -217,13 +239,13 @@
   gap: 11px;
   align-items: center;
   padding: 21px 7px;
-  border-top: 1px solid #34516e;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
   font-size: 10px;
   font-weight: 600;
 }
 :where(.modulo-mapa) .assinatura-lateral small {
   display: block;
-  color: #c5d6e9;
+  color: var(--color-sidebar-text-muted);
   margin-top: 5px;
   font-size: 10px;
   font-weight: 400;
@@ -243,7 +265,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  background: #fff;
+  background: var(--color-card);
   border-bottom: 1px solid var(--borda);
 }
 :where(.modulo-mapa) .caminho {
@@ -271,9 +293,9 @@
   gap: 4px;
   align-items: center;
   padding: 6px 8px;
-  background: #eaf3ff;
+  background: var(--color-primary-light);
   border-radius: 5px;
-  color: #0958b3;
+  color: var(--color-primary);
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
@@ -283,9 +305,9 @@
   align-items: center;
   gap: 7px;
   padding: 11px;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   font-size: 10px;
-  background: #f3f6fa;
+  background: var(--color-hover);
   border-radius: 6px;
 }
 :where(.modulo-mapa) .conteudo-mapa {
@@ -312,8 +334,8 @@
   overflow: hidden;
   border: 1px solid var(--borda);
   border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 3px 14px #102e5006;
+  background: var(--color-card);
+  box-shadow: 0 3px 14px var(--color-shadow);
 }
 :where(.modulo-mapa) .barra-mapa {
   display: flex;
@@ -351,7 +373,47 @@
   grid-template-columns: minmax(0, 1fr) 232px;
   height: clamp(430px, 65dvh, 620px);
   isolation: isolate;
-  background: #e6ece8;
+  background: var(--color-hover);
+}
+:where(.modulo-mapa) .controles-camadas-mapa {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+:where(.modulo-mapa) .controles-camadas-mapa button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 36px;
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text);
+  box-shadow: 0 4px 14px var(--color-shadow);
+  font-size: 9px;
+  line-height: 1;
+}
+:where(.modulo-mapa) .controles-camadas-mapa button svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: 0 0 16px;
+}
+:where(.modulo-mapa) .controles-camadas-mapa button.camada-mapa-ativa {
+  border-color: var(--cor-camada);
+  background: var(--cor-camada);
+  color: white;
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--cor-camada) 35%, transparent);
+}
+:where(.modulo-mapa) .controles-camadas-mapa button:not(.camada-mapa-ativa) {
+  border-color: var(--cor-camada);
+  color: var(--cor-camada);
 }
 :where(.modulo-mapa) .mapa-base,
 :where(.modulo-mapa) .superficie-mapa {
@@ -375,7 +437,7 @@
   overscroll-behavior: contain;
   padding: 17px;
   border-left: 1px solid var(--borda);
-  background: #fff;
+  background: var(--color-card);
 }
 :where(.modulo-mapa) .legenda-titulo {
   font-size: 13px;
@@ -394,7 +456,7 @@
   color: var(--texto);
 }
 :where(.modulo-mapa) .controle-calor > svg {
-  color: #0958b3;
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 :where(.modulo-mapa) .controle-calor > span {
@@ -415,9 +477,9 @@
   display: block;
   width: 36px;
   height: 21px;
-  border: 1px solid #94a5b8;
+  border: 1px solid var(--color-border);
   border-radius: 20px;
-  background: #e2e9f1;
+  background: var(--color-hover);
   transition: background 0.15s;
 }
 :where(.modulo-mapa) .trilho-calor > span {
@@ -427,15 +489,15 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #53657e;
+  background: var(--color-text-muted);
   transition: transform 0.15s;
 }
 :where(.modulo-mapa) [role='switch'][aria-checked='true'] .trilho-calor {
-  border-color: #0958b3;
-  background: #126bd3;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
 }
 :where(.modulo-mapa) [role='switch'][aria-checked='true'] .trilho-calor > span {
-  background: #fff;
+  background: var(--color-card);
   transform: translateX(15px);
 }
 :where(.modulo-mapa) .estado-calor {
@@ -463,7 +525,7 @@
   display: block;
   height: 9px;
   margin: 12px 0 6px;
-  border: 1px solid #526176;
+  border: 1px solid var(--color-border);
   border-radius: 5px;
 }
 :where(.modulo-mapa) .extremos-calor {
@@ -521,7 +583,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  color: #fff;
+  color: var(--color-card);
   font-size: 10px;
   font-weight: 700;
 }
@@ -559,14 +621,44 @@
 :where(.modulo-mapa) .estado-mapa button {
   border: 0;
   background: transparent;
-  color: #0958b3;
+  color: var(--color-primary);
   font-size: 11px;
   padding: 9px 0 9px 10px;
+}
+:where(.modulo-mapa) .estado-mapa .controles-camadas-mapa button {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex: 0 0 36px;
+  margin: 0;
+  padding: 0;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--cor-camada);
+  border-radius: 7px;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+}
+:where(.modulo-mapa) .estado-mapa .controles-camadas-mapa button svg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  transform: translate(-50%, -50%);
 }
 :where(.modulo-mapa) .sinal-pronto {
   width: 7px;
   height: 7px;
-  background: #176348;
+  background: var(--color-success);
   border-radius: 50%;
 }
 :where(.modulo-mapa) .rodape-pagina {
@@ -586,17 +678,17 @@
   left: 50%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify_content: center;
   gap: 9px;
   width: max-content;
   max-width: calc(100% - 30px);
   padding: 14px 18px;
   border: 1px solid var(--borda);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-card);
   color: var(--texto);
   font-size: 12px;
-  box-shadow: 0 3px 20px #102e5012;
+  box-shadow: 0 3px 20px var(--color-shadow);
   transform: translateX(-50%);
 }
 :where(.modulo-mapa) .spinner {
@@ -604,8 +696,8 @@
   flex-shrink: 0;
   width: 17px;
   height: 17px;
-  border: 2px solid #d9e6f5;
-  border-top-color: #0958b3;
+  border: 2px solid var(--color-border-light);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: girar 0.8s linear infinite;
 }
@@ -630,21 +722,21 @@
   flex-wrap: wrap;
   gap: 10px;
   padding: 12px 15px;
-  border: 1px solid #e4b9bd;
+  border: 1px solid var(--color-error-border);
   border-radius: 8px;
-  background: #fff6f6;
-  color: #872330;
-  box-shadow: 0 3px 15px #102e5010;
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  box-shadow: 0 3px 15px var(--color-shadow);
   font-size: 12px;
   line-height: 1.6;
 }
 :where(.modulo-mapa) .erro-mapa button {
-  color: #872330;
-  border-color: #e4b9bd;
+  color: var(--color-error);
+  border-color: var(--color-error-border);
 }
 :where(.modulo-mapa) .aviso-vazio {
   color: var(--texto);
-  background: #fff;
+  background: var(--color-card);
   border-color: var(--borda);
 }
 :where(.modulo-mapa) .aviso-dados {
@@ -654,20 +746,20 @@
   gap: 10px;
   margin: 0;
   padding: 12px 15px;
-  background: #fff8e9;
-  color: #714b0c;
-  border-top: 1px solid #e9d8b9;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border-top: 1px solid var(--color-warning-border);
   font-size: 12px;
   line-height: 1.6;
 }
 :where(.modulo-mapa) .erro-dados {
-  color: #872330;
-  background: #fff5f6;
-  border-color: #e4b9bd;
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-color: var(--color-error-border);
 }
 :where(.modulo-mapa) .erro-dados button {
   margin-left: auto;
-  color: #872330;
+  color: var(--color-error);
 }
 :where(.modulo-mapa) .marcador-risco,
 :where(.modulo-mapa) .agrupamento {
@@ -683,13 +775,13 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  border: 2px solid #fff;
+  border: 2px solid var(--color-card);
   border-radius: 50% 50% 50% 3px;
   background: var(--cor-risco);
   color: #fff;
   box-shadow:
-    0 2px 5px #102e5060,
-    0 0 0 1px #18334a80;
+    0 2px 5px var(--color-shadow),
+    0 0 0 1px var(--color-border);
   transform: rotate(-45deg);
 }
 :where(.modulo-mapa) .corpo-marcador b {
@@ -710,8 +802,8 @@
 :where(.modulo-mapa) .familia-selecionada .corpo-marcador {
   transform: translateY(-4px) rotate(-45deg) scale(1.15);
   box-shadow:
-    0 4px 10px #102e5060,
-    0 0 0 4px #ffffffa6;
+    0 4px 10px var(--color-shadow),
+    0 0 0 4px var(--color-card);
 }
 :where(.modulo-mapa) .popup-familia {
   transition: opacity 0.18s ease;
@@ -720,8 +812,8 @@
   padding: 18px 18px 16px;
   border: 1px solid var(--borda);
   border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 8px 28px #102e5030;
+  background: var(--color-card);
+  box-shadow: 0 8px 28px var(--color-shadow);
   animation: abrir-familia 0.2s ease-out;
 }
 :where(.modulo-mapa) .popup-familia .leaflet-popup-content {
@@ -772,7 +864,7 @@
 }
 :where(.modulo-mapa) .popup-familia .leaflet-popup-close-button:hover {
   color: var(--texto);
-  background: #eef5fc;
+  background: var(--color-primary-light);
 }
 @keyframes abrir-familia {
   from {
@@ -794,13 +886,13 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 3px solid #fff;
+  border: 3px solid var(--color-card);
   border-radius: 50%;
   background: var(--cor-risco);
   color: #fff;
   box-shadow:
-    0 0 0 4px #ffffff80,
-    0 2px 9px #102e5050;
+    0 0 0 4px var(--color-card),
+    0 2px 9px var(--color-shadow);
   font-size: 13px;
   font-weight: 700;
 }
@@ -843,11 +935,11 @@
   height: 34px;
   gap: 5px;
   padding: 0 8px;
-  border: 1.5px solid #173453;
+  border: 1.5px solid var(--color-text);
   border-radius: 11px;
-  background: #fff;
-  color: #173453;
-  box-shadow: 0 2px 7px #102e5040;
+  background: var(--color-card);
+  color: var(--color-text);
+  box-shadow: 0 2px 7px var(--color-shadow);
   font-size: 13px;
   font-weight: 700;
   transition:
@@ -865,17 +957,17 @@
   .mapa-base[data-camada-calor='ativo']
   :is(.agrupamento, .marcador-risco):hover
   .etiqueta-quantidade {
-  background: #eaf3ff;
-  border-color: #126bd3;
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
 }
 :where(.modulo-mapa)
   .mapa-base[data-camada-calor='ativo']
   .familia-selecionada
   .etiqueta-quantidade {
-  border-color: #126bd3;
+  border-color: var(--color-primary);
   box-shadow:
-    0 0 0 3px #126bd340,
-    0 2px 7px #102e5040;
+    0 0 0 3px var(--color-primary-light),
+    0 2px 7px var(--color-shadow);
 }
 :where(.modulo-mapa) .leitura-marcadores {
   display: grid;
@@ -901,25 +993,25 @@
   width: 41px;
   height: 28px;
   gap: 4px;
-  color: #173453;
+  color: var(--color-text);
 }
 :where(.modulo-mapa) .exemplo-grupo {
-  border: 1.5px solid #173453;
+  border: 1.5px solid var(--color-text);
   border-radius: 9px;
-  background: #fff;
+  background: var(--color-card);
   font-size: 11px;
 }
 :where(.modulo-mapa) .exemplo-pino {
-  color: #0958b3;
+  color: var(--color-primary);
 }
 :where(.modulo-mapa) .leaflet-container a {
-  color: #0958b3;
+  color: var(--color-primary);
 }
 :where(.modulo-mapa) .leaflet-container .leaflet-control-zoom {
   margin-top: 17px;
   margin-right: 17px;
-  border: 1px solid #cbd8e5;
-  box-shadow: 0 3px 12px #102e5015;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 3px 12px var(--color-shadow);
 }
 :where(.modulo-mapa) .leaflet-container .leaflet-control-zoom a {
   display: flex;
@@ -927,11 +1019,16 @@
   justify-content: center;
   width: 44px;
   height: 44px;
+  background: var(--color-card);
+  color: var(--texto);
+}
+:where(.modulo-mapa) .leaflet-container .leaflet-control-zoom a:hover {
+  background: var(--color-hover);
   color: var(--texto);
 }
 :where(.modulo-mapa) .leaflet-container .leaflet-control-attribution {
   font-size: 9px;
-  background: #fffffff2;
+  background: var(--color-card);
   padding: 3px 6px;
 }
 :where(.modulo-mapa) .leaflet-container .leaflet-control-scale {
@@ -939,24 +1036,27 @@
   margin-left: 10px;
 }
 :where(.modulo-mapa) .leaflet-container .leaflet-control-scale-line {
-  background: #fffffff2;
-  color: #173453;
-  border-color: #173453;
+  background: var(--color-card);
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 :where(.modulo-mapa) .leaflet-tooltip {
   font-family: 'Montserrat', sans-serif;
   font-size: 12px;
   padding: 9px 12px;
-  background: #fff;
+  background: var(--color-card);
   border: 1px solid var(--borda);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(16, 46, 80, 0.15);
+  box-shadow: 0 4px 12px var(--color-shadow);
   color: var(--texto);
 }
 :where(.modulo-mapa) .leaflet-interactive:focus-visible,
 :where(.modulo-mapa) .leaflet-marker-icon:focus-visible {
-  outline: 3px solid #073c79;
+  outline: 3px solid var(--color-primary);
   outline-offset: 6px;
+}
+:where(.modulo-mapa) .superficie-mapa.leaflet-grab {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 32 32'%3E%3Cpath d='M11 16V8a2 2 0 0 1 4 0v7V5a2 2 0 0 1 4 0v10V7a2 2 0 0 1 4 0v9V10a2 2 0 0 1 4 0v11c0 5-4 9-9 9h-1c-4 0-7-2-9-6l-3-5a2 2 0 0 1 3-3l4 4' fill='%23fff' stroke='%23111727' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 9 8, grab;
 }
 
 @media (min-width: 1600px) {
@@ -1003,6 +1103,42 @@
 }
 
 @media (max-width: 1024px) {
+  :where(.modulo-mapa) .theme-toggle-mobile {
+    display: flex;
+    align-items: center;
+  }
+  :where(.modulo-mapa) .theme-toggle-mobile .theme-toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: 0 6px 18px var(--color-shadow-strong);
+  }
+  :where(.modulo-mapa) .theme-toggle-mobile .theme-toggle-label {
+    display: none;
+  }
+  :where(.modulo-mapa) .mobile-cadastro-only {
+    width: 100%;
+    min-height: 100dvh;
+    padding: 0;
+  }
+
+  :where(.modulo-mapa) .mobile-cadastro-only .aviso-sucesso {
+    position: fixed;
+    z-index: 2200;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+  }
+
+  :where(.modulo-mapa) .painel-dialogo {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+  }
   :where(.modulo-mapa) .pagina-mapa {
     flex-direction: column;
   }
@@ -1214,27 +1350,27 @@
   color: var(--texto);
 }
 :where(.modulo-mapa) .botao-primario {
-  color: #fff;
-  background: #126bd3;
-  border-color: #126bd3;
-  box-shadow: 0 3px 7px #126bd319;
+  color: var(--color-card);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.18);
 }
 :where(.modulo-mapa) .botao-primario:hover:not(:disabled) {
-  color: #fff;
-  background: #0958b3;
-  border-color: #0958b3;
+  color: var(--color-card);
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 :where(.modulo-mapa) .botao-primario .spinner {
-  border-color: #ffffff70;
-  border-top-color: #fff;
+  border-color: var(--color-card);
+  border-top-color: var(--color-card);
 }
 :where(.modulo-mapa) .botao-secundario {
   color: var(--azul);
-  background: #fff;
+  background: var(--color-card);
   border-color: var(--azul);
 }
 :where(.modulo-mapa) .botao-secundario:hover:not(:disabled) {
-  color: #fff;
+  color: var(--color-card);
   background: var(--azul);
   border-color: var(--azul);
 }
@@ -1253,7 +1389,7 @@
 :where(.modulo-mapa) .sobretitulo {
   display: block;
   margin-bottom: 7px;
-  color: #60758c;
+  color: var(--color-text-muted);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -1295,7 +1431,7 @@
   padding: 17px;
   border: 1px solid var(--borda);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-card);
 }
 :where(.modulo-mapa) .icone-indicador {
   width: 41px;
@@ -1303,18 +1439,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #0958b3;
-  background: #edf5ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   border-radius: 9px;
   flex-shrink: 0;
 }
 :where(.modulo-mapa) .icone-indicador.atencao {
-  color: #a12937;
-  background: #fff0f1;
+  color: var(--color-error);
+  background: var(--color-error-bg);
 }
 :where(.modulo-mapa) .icone-indicador.positivo {
-  color: #176348;
-  background: #edf8f2;
+  color: var(--color-success);
+  background: var(--color-success-bg);
 }
 :where(.modulo-mapa) .indicadores > div > div {
   display: flex;
@@ -1336,14 +1472,14 @@
   margin-top: 6px;
   background: transparent;
   box-shadow: none;
-  color: #d3dfed;
+  color: var(--color-sidebar-text-muted);
   font-weight: 500;
 }
 :where(.modulo-mapa) .navegacao .nav-secundaria svg:last-child {
   margin-left: 0;
 }
 :where(.modulo-mapa) .navegacao .nav-secundaria:hover {
-  background: #254f79;
+  background: var(--color-sidebar-hover);
 }
 :where(.modulo-mapa) .filtros-familias {
   display: flex;
@@ -1359,13 +1495,13 @@
   gap: 9px;
   min-width: 230px;
   padding: 0 13px;
-  background: #fff;
-  border: 1px solid #cad6e4;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 7px;
-  color: #60758c;
+  color: var(--color-text-muted);
 }
 :where(.modulo-mapa) .busca-familias:focus-within {
-  outline: 3px solid #f4bb24;
+  outline: 3px solid var(--color-secondary);
   outline-offset: 2px;
 }
 :where(.modulo-mapa) .busca-familias input {
@@ -1390,9 +1526,9 @@
   min-height: 44px;
   min-width: 146px;
   padding: 9px 11px;
-  border: 1px solid #cad6e4;
+  border: 1px solid var(--color-border);
   border-radius: 7px;
-  background: #fff;
+  background: var(--color-card);
   font-size: 12px;
 }
 :where(.modulo-mapa) .filtro-bairro {
@@ -1411,9 +1547,9 @@
   min-height: 44px;
   min-width: 0;
   padding: 9px 11px;
-  border: 1px solid #cad6e4;
+  border: 1px solid var(--color-border);
   border-radius: 7px;
-  background: #fff;
+  background: var(--color-card);
   font-size: 12px;
 }
 :where(.modulo-mapa) .acoes-filtros {
@@ -1425,10 +1561,10 @@
 :where(.modulo-mapa) .botao-exportar {
   min-height: 44px;
   padding: 9px 15px;
-  color: #fff;
-  background: #10B981;
-  border-color: #10B981;
-  box-shadow: 0 3px 7px #10b98119;
+  color: var(--color-card);
+  background: var(--color-success);
+  border-color: var(--color-success);
+  box-shadow: 0 3px 7px var(--color-success-bg);
   font-size: 12px;
   font-weight: 600;
   display: inline-flex;
@@ -1436,15 +1572,15 @@
   gap: 8px;
 }
 :where(.modulo-mapa) .botao-exportar:hover:not(:disabled) {
-  background: #059669;
-  border-color: #059669;
+  background: var(--color-success);
+  border-color: var(--color-success);
 }
 :where(.modulo-mapa) .botao-exportar:disabled {
   opacity: 0.48;
   cursor: not-allowed;
 }
 :where(.modulo-mapa) .botao-exportar:focus-visible {
-  outline: 3px solid #f4bb24;
+  outline: 3px solid var(--color-secondary);
   outline-offset: 3px;
 }
 :where(.modulo-mapa) .filtros-familias output {
@@ -1464,9 +1600,9 @@
   gap: 10px;
   margin-bottom: 18px;
   padding: 12px 15px;
-  border: 1px solid #b5daca;
-  background: #f1fbf6;
-  color: #176348;
+  border: 1px solid var(--color-success-border);
+  background: var(--color-success-bg);
+  color: var(--color-success);
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.7;
@@ -1477,23 +1613,23 @@
 }
 :where(.modulo-mapa) .aviso-sucesso button {
   margin-left: auto;
-  color: #176348;
-  border-color: #b5daca;
+  color: var(--color-success);
+  border-color: var(--color-success-border);
   white-space: nowrap;
 }
 :where(.modulo-mapa) .consultar-no-mapa {
   width: 100%;
   margin-top: 16px;
-  color: #0958b3;
-  background: #edf5ff;
-  border-color: #c7ddf5;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-color: var(--color-border-light);
   font-size: 11px;
 }
 :where(.modulo-mapa) .painel-cadastros {
   margin-top: 22px;
   overflow: hidden;
-  background: #fff;
-  border: 1px solid var(--borda);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 11px;
 }
 :where(.modulo-mapa) .painel-cadastros > header {
@@ -1529,16 +1665,16 @@
   text-align: left;
 }
 :where(.modulo-mapa) .painel-cadastros th {
-  background: #f7f9fc;
+  background: var(--color-table-header-bg);
   padding: 13px 20px;
   font-size: 10px;
   font-weight: 600;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   white-space: nowrap;
 }
 :where(.modulo-mapa) .painel-cadastros td {
   padding: 9px 20px;
-  border-top: 1px solid #e9eef4;
+  border-top: 1px solid var(--color-border-light);
   font-size: 11px;
 }
 :where(.modulo-mapa) .painel-cadastros th:first-child {
@@ -1601,9 +1737,9 @@
   margin: 0 0 0 auto;
   padding: 0;
   border: 0;
-  background: #fff;
-  color: var(--texto);
-  box-shadow: -12px 0 60px #102e5033;
+  background: var(--color-card);
+  color: var(--color-text);
+  box-shadow: -12px 0 60px var(--color-shadow-strong);
   overflow: hidden;
   opacity: 0;
   transform: translateX(28px);
@@ -1616,7 +1752,7 @@
   transform: translateX(0);
 }
 :where(.modulo-mapa) .painel-dialogo::backdrop {
-  background: #0c2542;
+  background: var(--color-overlay);
   opacity: 0;
   transition: opacity 0.26s ease;
 }
@@ -1635,8 +1771,8 @@
   flex-shrink: 0;
   gap: 14px;
   padding: 25px 28px 21px;
-  border-bottom: 1px solid var(--borda);
-  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-card);
 }
 :where(.modulo-mapa) .cabecalho-dialogo h2 {
   margin: 0;
@@ -1651,7 +1787,13 @@
 }
 :where(.modulo-mapa) .cabecalho-dialogo .botao-icone {
   border: 0;
-  background: #f3f6fa;
+  background: var(--color-primary-light);
+}
+:where(.modulo-mapa) .acoes-cabecalho-dialogo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
 }
 :where(.modulo-mapa) .corpo-dialogo {
   flex: 1;
@@ -1666,8 +1808,8 @@
   gap: 13px;
   flex-shrink: 0;
   padding: 17px 28px;
-  border-top: 1px solid var(--borda);
-  background: #fff;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-card);
 }
 :where(.modulo-mapa) .rodape-dialogo > div {
   display: flex;
@@ -1684,10 +1826,10 @@
   align-items: flex-start;
   gap: 10px;
   padding: 15px;
-  border: 1px solid #c8dcf5;
+  border: 1px solid var(--color-primary-light);
   border-radius: 9px;
-  color: #174775;
-  background: #f1f7ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   margin-bottom: 25px;
 }
 :where(.modulo-mapa) .aviso-formulario > svg {
@@ -1706,8 +1848,8 @@
   font-size: 10px;
   padding: 8px 10px;
   margin-top: 3px;
-  color: #0958b3;
-  border-color: #b5cee9;
+  color: var(--color-primary);
+  border-color: var(--color-primary-light);
 }
 :where(.modulo-mapa) #formulario-familia fieldset {
   border: 0;
@@ -1733,8 +1875,8 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #edf4fd;
-  color: #0958b3;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 10px;
 }
 :where(.modulo-mapa) .ajuda-secao {
@@ -1764,16 +1906,16 @@
   display: block;
   width: 100%;
   min-height: 44px;
-  border: 1px solid #bccbda;
+  border: 1px solid var(--color-input-border);
   border-radius: 7px;
   padding: 11px 12px;
-  background: #fff;
+  background: var(--color-input-bg);
   font-size: 12px;
   font-weight: 400;
 }
 :where(.modulo-mapa) .campo input::placeholder,
 :where(.modulo-mapa) .campo textarea::placeholder {
-  color: #6b7d91;
+  color: var(--color-text-muted);
 }
 :where(.modulo-mapa) .campo textarea {
   resize: vertical;
@@ -1783,12 +1925,12 @@
 :where(.modulo-mapa) .campo small {
   font-size: 9px;
   font-weight: 400;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   align-self: flex-end;
 }
 :where(.modulo-mapa) .campo input[aria-invalid='true'] {
-  border-color: #b52d39;
-  background: #fffafb;
+  border-color: var(--color-input-error);
+  background: var(--color-error-bg);
 }
 :where(.modulo-mapa) .grade-campos {
   display: grid;
@@ -1797,6 +1939,164 @@
 }
 :where(.modulo-mapa) .grade-campos.endereco {
   grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+}
+:where(.modulo-mapa) .etapas-cadastro {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+  scrollbar-width: thin;
+}
+:where(.modulo-mapa) .etapas-cadastro button {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--secundario);
+  font-size: 10px;
+  white-space: nowrap;
+}
+:where(.modulo-mapa) .etapas-cadastro button > span {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-border-light);
+  font-size: 9px;
+}
+:where(.modulo-mapa) .etapas-cadastro button.etapa-ativa {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-card);
+}
+:where(.modulo-mapa) .etapas-cadastro button.etapa-ativa > span {
+  background: var(--color-card);
+  color: var(--color-primary);
+}
+:where(.modulo-mapa) .conteudo-etapa {
+  min-height: 260px;
+  animation: chegar-suave 0.18s ease-out;
+}
+:where(.modulo-mapa) .sugestao-risco-territorial {
+  margin: -2px 0 16px;
+  padding: 11px 12px;
+  border-left: 3px solid var(--color-primary);
+  border-radius: 6px;
+  background: var(--color-primary-light);
+  color: var(--color-text);
+  font-size: 10px;
+  line-height: 1.7;
+}
+:where(.modulo-mapa) .navegacao-etapas {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+:where(.modulo-mapa) .navegacao-etapas button {
+  min-width: 120px;
+}
+:where(.modulo-mapa) .navegacao-etapas-rodape {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  gap: 8px;
+}
+:where(.modulo-mapa) .navegacao-etapas-rodape button {
+  flex: 1;
+  min-height: 52px;
+}
+:where(.modulo-mapa) .anexos-fotos {
+  margin: 4px 0 16px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+}
+:where(.modulo-mapa) .anexos-fotos-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+:where(.modulo-mapa) .anexos-fotos-cabecalho span {
+  color: var(--secundario);
+  font-size: 10px;
+}
+:where(.modulo-mapa) .anexos-fotos > p {
+  margin: 7px 0 12px;
+  color: var(--secundario);
+  font-size: 10px;
+  line-height: 1.6;
+}
+:where(.modulo-mapa) .entrada-foto {
+  display: none;
+}
+:where(.modulo-mapa) .acoes-anexo-foto {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+:where(.modulo-mapa) .acoes-anexo-foto button {
+  min-height: 52px;
+  padding: 10px;
+  font-size: 11px;
+}
+:where(.modulo-mapa) .erro-anexo-foto {
+  color: var(--color-error) !important;
+  font-weight: 600;
+}
+:where(.modulo-mapa) .lista-fotos-anexadas {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+:where(.modulo-mapa) .foto-anexada {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-card);
+}
+:where(.modulo-mapa) .foto-anexada img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+:where(.modulo-mapa) .foto-anexada > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+:where(.modulo-mapa) .foto-anexada strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+:where(.modulo-mapa) .foto-anexada span {
+  color: var(--secundario);
+  font-size: 9px;
+}
+:where(.modulo-mapa) .foto-anexada button {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 7px;
+  color: var(--color-error);
 }
 :where(.modulo-mapa) .campo-curto {
   max-width: 210px;
@@ -1811,9 +2111,9 @@
 }
 :where(.modulo-mapa) .localizacao-cadastro {
   padding: 16px;
-  border: 1px solid var(--borda);
+  border: 1px solid var(--color-border);
   border-radius: 9px;
-  background: #f8fafc;
+  background: var(--color-primary-light);
 }
 :where(.modulo-mapa) .localizacao-cadastro > strong {
   font-size: 12px;
@@ -1822,7 +2122,7 @@
 :where(.modulo-mapa) .seletor-localizacao p {
   font-size: 10px;
   line-height: 1.8;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   margin: 8px 0 13px;
 }
 :where(.modulo-mapa) .modos-localizacao {
@@ -1838,13 +2138,13 @@
   white-space: nowrap;
 }
 :where(.modulo-mapa) .modos-localizacao [aria-pressed='true'] {
-  color: #0958b3;
-  background: #eaf3ff;
-  border-color: #83b5f0;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
 }
 :where(.modulo-mapa) .mapa-selecao {
   height: 230px;
-  border: 1px solid #c9d6e3;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
 }
 :where(.modulo-mapa) .seletor-localizacao > button {
@@ -1863,11 +2163,11 @@
   display: block;
   width: 26px;
   height: 26px;
-  border: 3px solid #fff;
+  border: 3px solid var(--color-card);
   border-radius: 50% 50% 50% 3px;
-  background: #126bd3;
+  background: var(--color-primary);
   transform: rotate(-45deg);
-  box-shadow: 0 1px 7px #102e5099;
+  box-shadow: 0 1px 7px var(--color-shadow-strong);
 }
 :where(.modulo-mapa) .localizacao-confirmada {
   display: flex;
@@ -1875,10 +2175,10 @@
   gap: 7px;
   padding: 12px;
   margin-top: 13px;
-  border: 1px solid #bfdfce;
+  border: 1px solid var(--color-success-border);
   border-radius: 6px;
-  background: #f0faf4;
-  color: #176348;
+  background: var(--color-success-bg);
+  color: var(--color-success);
   font-size: 10px;
   line-height: 1.8;
 }
@@ -1896,7 +2196,7 @@
 }
 :where(.modulo-mapa) .erro-campo {
   display: block;
-  color: #a12232;
+  color: var(--color-error);
   font-weight: 500;
   font-size: 10px;
   line-height: 1.7;
@@ -1917,21 +2217,21 @@
   gap: 7px;
   min-height: 48px;
   padding: 10px;
-  border: 1px solid #d3dce7;
+  border: 1px solid var(--color-border-light);
   border-radius: 7px;
   font-size: 10px;
   cursor: pointer;
-  background: #fff;
+  background: var(--color-input-bg);
 }
 :where(.modulo-mapa) .opcao-risco[data-selecionado='true'] {
-  border-color: #3883da;
-  background: #f1f7ff;
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 :where(.modulo-mapa) .opcao-risco input {
   width: 15px;
   height: 15px;
   margin: 0;
-  accent-color: #126bd3;
+  accent-color: var(--color-primary);
 }
 :where(.modulo-mapa) .opcao-risco .amostra {
   width: 20px;
@@ -1944,7 +2244,7 @@
   gap: 9px;
   padding: 13px;
   border-radius: 7px;
-  background: #f4f7fa;
+  background: var(--color-hover);
   font-size: 11px;
   line-height: 1.8;
 }
@@ -1953,11 +2253,11 @@
   height: 18px;
   margin: 1px 0 0;
   flex-shrink: 0;
-  accent-color: #126bd3;
+  accent-color: var(--color-primary);
 }
 :where(.modulo-mapa) .erro-envio {
   margin-top: 16px;
-  border: 1px solid #e4b9bd;
+  border: 1px solid var(--color-error-border);
   border-radius: 7px;
 }
 :where(.modulo-mapa) .resumo-familia {
@@ -1972,10 +2272,10 @@
   justify-content: center;
   width: 54px;
   height: 54px;
-  border: 1px solid #d8e6f8;
+  border: 1px solid var(--color-primary-light);
   border-radius: 12px;
-  color: #0958b3;
-  background: #edf5ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   flex-shrink: 0;
 }
 :where(.modulo-mapa) .resumo-familia h3 {
@@ -1996,7 +2296,7 @@
 }
 :where(.modulo-mapa) .secao-detalhe h4 {
   font-size: 12px;
-  border-bottom: 1px solid var(--borda);
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 12px;
   margin: 0 0 15px;
 }
@@ -2014,7 +2314,7 @@
 }
 :where(.modulo-mapa) .secao-detalhe dt {
   font-size: 10px;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   margin-bottom: 7px;
 }
 :where(.modulo-mapa) .secao-detalhe dd {
@@ -2035,14 +2335,14 @@
   padding: 5px 8px;
   font-size: 9px;
   border: 0;
-  background: #f3f6fa;
+  background: var(--color-hover);
 }
 :where(.modulo-mapa) .nota-detalhe,
 :where(.modulo-mapa) .aviso-detalhe {
   padding: 15px;
-  background: #f4f7fa;
+  background: var(--color-hover);
   border-radius: 8px;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   font-size: 11px;
   line-height: 1.9;
 }
@@ -2066,7 +2366,7 @@
   margin-left: auto;
   font-size: 10px;
   font-weight: 500;
-  color: var(--secundario);
+  color: var(--color-text-muted);
 }
 :where(.modulo-mapa) .resumo-composicao {
   display: grid;
@@ -2079,21 +2379,21 @@
   flex-direction: column;
   gap: 7px;
   padding: 12px 10px;
-  border: 1px solid #dce7f2;
+  border: 1px solid var(--color-border-light);
   border-radius: 8px;
-  background: #f6f9fd;
+  background: var(--color-primary-light);
   font-size: 9px;
   line-height: 1.6;
-  color: var(--secundario);
+  color: var(--color-text-muted);
 }
 :where(.modulo-mapa) .resumo-composicao strong {
   font-size: 21px;
-  color: #183c64;
+  color: var(--color-primary);
 }
 :where(.modulo-mapa) .secao-detalhe .nota-composicao {
   font-size: 10px;
   line-height: 1.8;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   margin: 10px 0 15px;
 }
 :where(.modulo-mapa) .lista-integrantes {
@@ -2102,10 +2402,10 @@
   gap: 10px;
 }
 :where(.modulo-mapa) .cartao-integrante {
-  border: 1px solid #d4dfeb;
+  border: 1px solid var(--color-border-light);
   border-radius: 9px;
   overflow: hidden;
-  background: #fff;
+  background: var(--color-card);
 }
 :where(.modulo-mapa) .cartao-integrante > .acionador-recolhivel {
   display: flex;
@@ -2133,7 +2433,7 @@
   display: block;
   margin-top: 3px;
   font-size: 10px;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   line-height: 1.7;
 }
 :where(.modulo-mapa) .numero-integrante {
@@ -2143,14 +2443,14 @@
   height: 28px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #edf4fc;
-  color: #245ba3;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 600;
 }
 :where(.modulo-mapa) .abrir-integrante {
   font-size: 21px;
-  color: #245ba3;
+  color: var(--color-primary);
   transition: transform 0.2s ease;
 }
 :where(.modulo-mapa) .cartao-integrante[data-aberto='true'] .abrir-integrante {
@@ -2159,16 +2459,16 @@
 :where(.modulo-mapa)
   .cartao-integrante[data-aberto='true']
   > .acionador-recolhivel {
-  background: #f5f9fe;
-  border-bottom: 1px solid #e2eaf3;
+  background: var(--color-primary-light);
+  border-bottom: 1px solid var(--color-border-light);
 }
 :where(.modulo-mapa) .cartao-integrante dl {
   padding: 16px;
 }
 :where(.modulo-mapa) .ficha-familiar {
-  border: 1px solid #d4dfeb;
+  border: 1px solid var(--color-border-light);
   border-radius: 9px;
-  background: #f8fafc;
+  background: var(--color-primary-light);
   padding: 15px;
   margin: 0 0 14px;
 }
@@ -2183,26 +2483,26 @@
 :where(.modulo-mapa) .remover-familiar {
   min-height: 36px;
   padding: 6px 8px;
-  color: #a12232;
+  color: var(--color-error);
   font-size: 10px;
 }
 :where(.modulo-mapa) .adicionar-familiar {
   width: 100%;
   border-style: dashed;
   font-size: 11px;
-  color: #0958b3;
+  color: var(--color-primary);
   min-height: 44px;
 }
 :where(.modulo-mapa) .localizacao-confirmada.fora-municipio {
-  color: #a12232;
-  background: #fff6f6;
-  border-color: #e4b9bd;
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-color: var(--color-error-border);
 }
 :where(.modulo-mapa) .referencias-risco {
   padding: 16px;
-  border: 1px solid var(--borda);
+  border: 1px solid var(--color-border);
   border-radius: 9px;
-  background: #f8fafc;
+  background: var(--color-primary-light);
   margin: 16px 0;
 }
 :where(.modulo-mapa) .referencias-risco h3 {
@@ -2213,7 +2513,7 @@
   font-size: 11px;
   line-height: 1.9;
   margin: 0 0 12px;
-  color: var(--secundario);
+  color: var(--color-text-muted);
 }
 :where(.modulo-mapa) .referencias-risco a {
   display: flex;
@@ -2221,7 +2521,7 @@
   gap: 5px;
   width: fit-content;
   margin-top: 10px;
-  color: #0958b3;
+  color: var(--color-primary);
   font-size: 10px;
   line-height: 1.8;
 }
@@ -2243,6 +2543,14 @@
   }
 }
 @media (max-width: 1024px) {
+  :where(.modulo-mapa) .controles-camadas-mapa {
+    width: 100%;
+    order: -1;
+    overflow-x: auto;
+  }
+  :where(.modulo-mapa) .controles-camadas-mapa button {
+    flex: 0 0 36px;
+  }
   :where(.modulo-mapa) .navegacao {
     display: flex;
     gap: 8px;
@@ -2257,7 +2565,7 @@
   }
   :where(.modulo-mapa) .navegacao .nav-secundaria {
     margin: 0;
-    border: 1px solid #476481;
+    border: 1px solid var(--color-border);
     font-size: 10px;
   }
   :where(.modulo-mapa) .introducao-gestao {
@@ -2389,8 +2697,8 @@
   }
 }
 :where(.modulo-mapa) .painel-ambiental {
-  background: #fff;
-  border: 1px solid var(--borda);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   margin-bottom: 20px;
 }
@@ -2410,10 +2718,10 @@
   flex-shrink: 0;
   width: 37px;
   height: 37px;
-  border: 1px solid #d9e6ec;
+  border: 1px solid var(--color-border-light);
   border-radius: 8px;
-  background: #f0f7f8;
-  color: #24687a;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 :where(.modulo-mapa) .painel-ambiental .acionador-recolhivel strong {
   display: block;
@@ -2421,7 +2729,7 @@
 }
 :where(.modulo-mapa) .painel-ambiental .acionador-recolhivel small {
   display: block;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   font-size: 10px;
   line-height: 1.7;
   margin-top: 5px;
@@ -2431,7 +2739,7 @@
   align-items: center;
   gap: 14px;
   margin-left: auto;
-  color: #0958b3;
+  color: var(--color-primary);
   font-size: 10px;
   white-space: nowrap;
 }
@@ -2452,11 +2760,11 @@
 }
 :where(.modulo-mapa) .conteudo-ambiental {
   padding: 0 18px 16px;
-  border-top: 1px solid var(--borda);
+  border-top: 1px solid var(--color-border);
 }
 :where(.modulo-mapa) .nota-ambiente {
   margin: 14px 0;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   font-size: 10px;
   line-height: 1.9;
 }
@@ -2467,7 +2775,7 @@
 }
 :where(.modulo-mapa) .cartao-fonte {
   padding: 15px;
-  border: 1px solid #dce5ec;
+  border: 1px solid var(--color-border-light);
   border-radius: 8px;
 }
 :where(.modulo-mapa) .cartao-fonte > header {
@@ -2477,7 +2785,7 @@
 }
 :where(.modulo-mapa) .cartao-fonte > header > svg {
   flex-shrink: 0;
-  color: #24687a;
+  color: var(--color-primary);
 }
 :where(.modulo-mapa) .cartao-fonte h3,
 :where(.modulo-mapa) .cartao-geologia h3 {
@@ -2487,7 +2795,7 @@
 :where(.modulo-mapa) .cartao-fonte header p,
 :where(.modulo-mapa) .cartao-geologia > div > p {
   margin: 6px 0 0;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   font-size: 9px;
   line-height: 1.6;
 }
@@ -2497,9 +2805,9 @@
   height: 22px;
   flex-shrink: 0;
   appearance: none;
-  border: 1px solid #8da1b5;
+  border: 1px solid var(--color-border);
   border-radius: 15px;
-  background: #e3eaf1;
+  background: var(--color-hover);
   cursor: pointer;
   position: relative;
   transition: background 0.18s;
@@ -2511,16 +2819,16 @@
   top: 3px;
   width: 14px;
   height: 14px;
-  background: #52677d;
+  background: var(--color-text-muted);
   border-radius: 50%;
   transition: transform 0.18s;
 }
 :where(.modulo-mapa) .cartao-fonte input[role='switch']:checked {
-  background: #126bd3;
-  border-color: #126bd3;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
 }
 :where(.modulo-mapa) .cartao-fonte input[role='switch']:checked::after {
-  background: #fff;
+  background: var(--color-card);
   transform: translateX(15px);
 }
 :where(.modulo-mapa) .camada-desligada,
@@ -2539,7 +2847,7 @@
   align-items: center;
   gap: 5px;
   min-height: 32px;
-  color: #0958b3;
+  color: var(--color-primary);
   font-size: 9px;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -2554,7 +2862,7 @@
 }
 :where(.modulo-mapa) .leituras-estacoes li {
   padding: 11px 0;
-  border-top: 1px solid #e6ecf2;
+  border-top: 1px solid var(--color-border-light);
 }
 :where(.modulo-mapa) .leituras-estacoes li > div {
   display: flex;
@@ -2577,19 +2885,19 @@
   display: block;
   font-size: 9px;
   line-height: 1.8;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   margin-top: 5px;
 }
 :where(.modulo-mapa) .medicao-antiga {
   display: block;
-  color: #8c540a;
+  color: var(--color-warning);
   font-size: 9px;
   line-height: 1.7;
   margin-top: 4px;
 }
 :where(.modulo-mapa) .cartao-geologia {
   padding: 17px;
-  border: 1px solid #dce5ec;
+  border: 1px solid var(--color-border-light);
   border-radius: 8px;
   margin-top: 12px;
 }
@@ -2611,7 +2919,7 @@
 :where(.modulo-mapa) .filtro-alta input {
   width: 17px;
   height: 17px;
-  accent-color: #126bd3;
+  accent-color: var(--color-primary);
 }
 :where(.modulo-mapa) .legenda-territorio {
   display: flex;
@@ -2635,7 +2943,7 @@
 :where(.modulo-mapa) .limite-cartografia {
   font-size: 10px;
   line-height: 1.9;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   margin: 10px 0;
 }
 :where(.modulo-mapa) .rodape-ambiental {
@@ -2648,7 +2956,7 @@
 :where(.modulo-mapa) .rodape-ambiental > span {
   font-size: 9px;
   line-height: 1.8;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   max-width: 500px;
 }
 :where(.modulo-mapa) .rodape-ambiental > button {
@@ -2662,17 +2970,17 @@
   gap: 3px;
   padding: 5px 8px;
   min-width: 105px;
-  background: #fff;
-  border: 2px solid #1671b7;
+  background: var(--color-card);
+  border: 2px solid var(--color-primary);
   border-radius: 7px;
-  color: #164f7f;
-  box-shadow: 0 2px 6px #102e5028;
+  color: var(--color-primary);
+  box-shadow: 0 2px 6px var(--color-shadow);
   font-size: 10px;
   line-height: 1.2;
 }
 :where(.modulo-mapa) .etiqueta-estacao.rio {
-  border-color: #157e88;
-  color: #165e6a;
+  border-color: var(--color-success);
+  color: var(--color-success);
 }
 :where(.modulo-mapa) .etiqueta-estacao b {
   font-size: 7px;
@@ -2686,7 +2994,7 @@
   border-style: dashed;
 }
 :where(.modulo-mapa) .popup-estacao {
-  color: var(--texto);
+  color: var(--color-text);
   font-family: 'Montserrat', sans-serif;
   font-size: 11px;
   line-height: 1.8;
@@ -2703,11 +3011,11 @@
   font-size: 10px;
 }
 :where(.modulo-mapa) .popup-estacao a {
-  color: #0958b3;
+  color: var(--color-primary);
   font-size: 10px;
 }
 :where(.modulo-mapa) .alerta-leitura {
-  color: #8c540a;
+  color: var(--color-warning);
 }
 :where(.modulo-mapa) .carregando-territorio {
   position: absolute;
@@ -2720,10 +3028,10 @@
   margin: 0;
   padding: 12px 15px;
   border-radius: 7px;
-  border: 1px solid var(--borda);
-  background: #fff;
-  color: var(--secundario);
-  box-shadow: 0 2px 15px #102e5015;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text-muted);
+  box-shadow: 0 2px 15px var(--color-shadow);
   font-size: 11px;
 }
 :where(.modulo-mapa) .area-planejada {
@@ -2733,8 +3041,8 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 15px 18px;
-  border-top: 1px solid #bed5e9;
-  background: #eef6fd;
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-primary-light);
   border-radius: 0 0 10px 10px;
 }
 :where(.modulo-mapa) .area-planejada strong {
@@ -2747,7 +3055,7 @@
 :where(.modulo-mapa) .area-planejada small {
   font-size: 9px;
   line-height: 1.8;
-  color: var(--secundario);
+  color: var(--color-text-muted);
 }
 :where(.modulo-mapa) .area-planejada > div:last-child {
   display: flex;
@@ -2813,7 +3121,7 @@
   color: inherit;
 }
 :where(.modulo-mapa) .recolhivel > .acionador-recolhivel:hover {
-  background: #f5f9fe;
+  background: var(--color-primary-light);
   color: inherit;
 }
 :where(.modulo-mapa) .expansao-recolhivel {
@@ -2850,7 +3158,7 @@
 }
 :where(.modulo-mapa) .painel-cadastros tbody tr:hover,
 :where(.modulo-mapa) .painel-cadastros tbody tr:focus-within {
-  background: #f5f9fe;
+  background: var(--color-table-row-hover);
 }
 :where(.modulo-mapa) .navegacao a {
   transition:
@@ -2867,8 +3175,8 @@
 :where(.modulo-mapa) .campo input:focus-visible,
 :where(.modulo-mapa) .campo select:focus-visible,
 :where(.modulo-mapa) .campo textarea:focus-visible {
-  border-color: #438bdc;
-  box-shadow: 0 0 0 3px #126bd314;
+  border-color: var(--color-input-focus);
+  box-shadow: 0 0 0 3px var(--color-focus);
 }
 @keyframes chegar-suave {
   from {
@@ -2891,7 +3199,7 @@
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   :where(.modulo-mapa) .botao-primario:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 5px 13px #126bd32b;
+    box-shadow: 0 5px 13px var(--color-focus);
   }
   :where(.modulo-mapa) .botao-primario:active:not(:disabled) {
     transform: translateY(0);
@@ -2904,25 +3212,60 @@
   :where(.modulo-mapa) .painel-dialogo[data-visivel='true'] {
     transform: translateY(0);
   }
+  :where(.modulo-mapa) .campo input,
+  :where(.modulo-mapa) .campo select,
+  :where(.modulo-mapa) .campo textarea {
+    min-height: 52px;
+    padding: 13px 14px;
+  }
+  :where(.modulo-mapa) .campo select {
+    width: 100%;
+    max-width: 100%;
+  }
+  :where(.modulo-mapa) .navegacao-etapas {
+    display: none;
+  }
+  :where(.modulo-mapa) .navegacao-etapas button {
+    min-height: 52px;
+  }
+  :where(.modulo-mapa) .rodape-dialogo > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  :where(.modulo-mapa) .navegacao-etapas-rodape {
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
+  }
+  :where(.modulo-mapa) .botao-adicionar-demonstracao {
+    width: 100%;
+    max-width: none;
+    min-height: 52px;
+  }
+  :where(.modulo-mapa) .mobile-cadastro-only .rodape-dialogo {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
 }
 
 /* Feedback de validação e organização da consulta em telas pequenas. */
 :where(.modulo-mapa) .ajuda-mapa {
   display: block;
   margin-top: 9px;
-  color: var(--secundario);
+  color: var(--color-text-muted);
   font-size: 10px;
   line-height: 1.7;
 }
 :where(.modulo-mapa) .campo [aria-invalid='true'] {
-  border-color: #b52d39;
+  border-color: var(--color-input-error);
 }
 :where(.modulo-mapa) .foco-erro {
   padding: 12px;
-  border: 1px solid #e4b9bd;
+  border: 1px solid var(--color-error-border);
   border-radius: 7px;
-  background: #fff6f6;
-  color: #872330;
+  background: var(--color-error-bg);
+  color: var(--color-error);
   font-size: 11px;
   line-height: 1.8;
   margin-bottom: 18px;
@@ -2930,10 +3273,10 @@
 :where(.modulo-mapa) .aviso-conexao {
   margin-bottom: 16px;
   padding: 12px 15px;
-  border: 1px solid #e9d8b9;
+  border: 1px solid var(--color-warning-border);
   border-radius: 8px;
-  background: #fff8e9;
-  color: #714b0c;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
   font-size: 11px;
   line-height: 1.8;
 }

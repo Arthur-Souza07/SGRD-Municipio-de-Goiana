@@ -1,6 +1,6 @@
 import limite from '../data/limite-goiana.json';
 import bairros from '../data/bairros-goiana.json';
-import type { Feature, Polygon, MultiPolygon, FeatureCollection, Position } from 'geojson';
+import type { Feature, Polygon, MultiPolygon, FeatureCollection, Geometry, Position } from 'geojson';
 import type * as Leaflet from 'leaflet';
 
 export const LIMITE_GOIANA = limite as Feature<Polygon | MultiPolygon>;
@@ -122,6 +122,109 @@ export function validarLocalizacaoGoiana(longitude: number, latitude: number): {
     dentroMunicipio: true,
     bairro,
     mensagem: `Localização válida no bairro ${bairro}.`,
+  };
+}
+
+export type ClasseSuscetibilidade = 'Baixa' | 'Média' | 'Alta';
+export interface SugestaoRiscoTerritorial {
+  classe: ClasseSuscetibilidade | null;
+  camada: 'inundacao' | 'movimento' | null;
+  resumo: string;
+  pontuacao: number;
+  distanciaAreaMetros: number | null;
+  fatores: string[];
+}
+
+const cacheSuscetibilidade =
+  new Map<'inundacao' | 'movimento', FeatureCollection<Geometry, {
+    camada: 'inundacao' | 'movimento';
+    descricao: ClasseSuscetibilidade;
+  }>>();
+
+function pontoEmGeometria(
+  longitude: number,
+  latitude: number,
+  geometria: Geometry,
+): boolean {
+  if (geometria.type === 'Polygon') {
+    const poligono = geometria.coordinates as Position[][];
+    return pontoEmPoligono(longitude, latitude, poligono);
+  }
+  if (geometria.type === 'MultiPolygon') {
+    return (geometria.coordinates as Position[][][]).some((poligono) =>
+      pontoEmPoligono(longitude, latitude, poligono),
+    );
+  }
+  return false;
+}
+
+export async function avaliarRiscoTerritorial(
+  longitude: number,
+  latitude: number,
+): Promise<SugestaoRiscoTerritorial> {
+  if (!dentroDeGoiana(longitude, latitude)) {
+    return {
+      classe: null,
+      camada: null,
+      resumo: 'Localização fora do limite municipal.',
+      pontuacao: 0,
+      distanciaAreaMetros: null,
+      fatores: ['Localização fora do limite municipal.'],
+    };
+  }
+
+  const classes: Array<{
+    camada: 'inundacao' | 'movimento';
+    classe: ClasseSuscetibilidade;
+  }> = [];
+
+  for (const camada of ['inundacao', 'movimento'] as const) {
+    let dados = cacheSuscetibilidade.get(camada);
+    if (!dados) {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+      const resposta = await fetch(`${base}/camadas/suscetibilidade-goiana.geojson`);
+      if (!resposta.ok) continue;
+      dados = await resposta.json() as FeatureCollection<
+        Geometry,
+        { camada: 'inundacao' | 'movimento'; descricao: ClasseSuscetibilidade }
+      >;
+      cacheSuscetibilidade.set(camada, dados);
+    }
+
+    for (const feature of dados.features) {
+      if (feature.properties?.camada !== camada) continue;
+      if (!pontoEmGeometria(longitude, latitude, feature.geometry)) continue;
+      const classe = feature.properties.descricao;
+      if (classe === 'Alta' || classe === 'Média' || classe === 'Baixa') {
+        classes.push({ camada, classe });
+        break;
+      }
+    }
+  }
+
+  const prioritario = classes.find((item) => item.classe === 'Alta')
+    ?? classes.find((item) => item.classe === 'Média');
+  if (!prioritario) {
+    return {
+      classe: 'Baixa',
+      camada: null,
+      resumo: 'Nenhuma área de inundação ou movimento de massa ativa foi encontrada.',
+      pontuacao: 12,
+      distanciaAreaMetros: null,
+      fatores: ['Nenhuma área de inundação ou movimento de massa ativa foi encontrada.'],
+    };
+  }
+
+  const nomeCamada = prioritario.camada === 'inundacao'
+    ? 'inundação'
+    : 'movimento de massa';
+  return {
+    classe: prioritario.classe,
+    camada: prioritario.camada,
+    resumo: `Suscetibilidade ${prioritario.classe.toLocaleLowerCase('pt-BR')} a ${nomeCamada} no SGB 2025.`,
+    pontuacao: prioritario.classe === 'Alta' ? 48 : prioritario.classe === 'Média' ? 30 : 12,
+    distanciaAreaMetros: 0,
+    fatores: [`Suscetibilidade ${prioritario.classe.toLocaleLowerCase('pt-BR')} a ${nomeCamada} no SGB 2025.`],
   };
 }
 

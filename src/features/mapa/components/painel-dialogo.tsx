@@ -17,6 +17,8 @@ export default function PainelDialogo({
   children,
   rodape,
   id,
+  mostrarFechar = true,
+  acoesCabecalho,
 }: {
   aberto: boolean;
   aoFechar: () => void;
@@ -26,6 +28,8 @@ export default function PainelDialogo({
   children: ReactNode;
   rodape?: ReactNode | ((fechar: () => void) => ReactNode);
   id: string;
+  mostrarFechar?: boolean;
+  acoesCabecalho?: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const acionador = useRef<HTMLElement | null>(null);
@@ -111,15 +115,20 @@ export default function PainelDialogo({
             <h2 id={`${id}-titulo`}>{titulo}</h2>
             {subtitulo && <p id={`${id}-subtitulo`}>{subtitulo}</p>}
           </div>
-          <button
-            className="botao-icone"
-            type="button"
-            onClick={fechar}
-            disabled={ocupado}
-            aria-label={`Fechar ${titulo.toLowerCase()}`}
-          >
-            <X size={21} />
-          </button>
+          <div className="acoes-cabecalho-dialogo">
+            {acoesCabecalho}
+            {mostrarFechar && (
+              <button
+                className="botao-icone"
+                type="button"
+                onClick={fechar}
+                disabled={ocupado}
+                aria-label={`Fechar ${titulo.toLowerCase()}`}
+              >
+                <X size={21} />
+              </button>
+            )}
+          </div>
         </header>
         <div className="corpo-dialogo">{children}</div>
         {rodape && (

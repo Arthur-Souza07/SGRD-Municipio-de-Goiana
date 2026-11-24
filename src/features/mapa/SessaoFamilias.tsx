@@ -14,6 +14,7 @@ import {
 /** A sessão sobrevive à navegação; nenhum dado pessoal é gravado no navegador. */
 export default function SessaoFamilias({ children }: { children: ReactNode }) {
   const [cadastrosSessao, setCadastrosSessao] = useState<CadastroFamilia[]>([]);
+  const [mobileJustLoggedIn, setMobileJustLoggedIn] = useState(false);
   const atuais = useRef<CadastroFamilia[]>([]);
   const documentosEmEnvio = useRef(new Set<string>());
 
@@ -99,8 +100,14 @@ export default function SessaoFamilias({ children }: { children: ReactNode }) {
   );
 
   const contexto = useMemo(
-    () => ({ cadastrosSessao, salvarFamilia }),
-    [cadastrosSessao, salvarFamilia],
+    () => ({
+      cadastrosSessao,
+      setCadastrosSessao,
+      salvarFamilia,
+      mobileJustLoggedIn,
+      setMobileJustLoggedIn,
+    }),
+    [cadastrosSessao, setCadastrosSessao, salvarFamilia, mobileJustLoggedIn],
   );
 
   return (

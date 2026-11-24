@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { gerarFamiliasDemo } from '../src/features/mapa/lib/gerador-familias';
 import { criarCadastroDemonstrativo } from '../src/features/mapa/lib/familias';
 import { normalizarPontos } from '../src/features/mapa/lib/pontos';
 import { calcularIdade } from '../src/features/mapa/lib/integrantes';
 import { cpfValido } from '../src/features/mapa/lib/familias';
 import { dentroDeGoiana } from '../src/features/mapa/lib/territorio';
+import { carregarDemonstracao } from '../src/features/mapa/lib/demonstracao';
+import { calcularRiscoTerritorial } from '../src/features/mapa/lib/risco-territorial';
 
 function emAnel([x, y]: [number, number], anel: [number, number][]): boolean {
   let dentro = false;
@@ -140,18 +143,44 @@ test('famílias geradas têm todos os campos obrigatórios do template Excel', (
   }
 });
 
-test('distribuição de risco segue proporções esperadas (30% alto, 40% médio, 30% baixo)', () => {
-  const familias = gerarFamiliasDemo(1000, 20261030);
-  const contagem = { alto: 0, medio: 0, baixo: 0 };
+test('demonstração sorteia pontos nas camadas e calcula o risco pelas coordenadas', async () => {
+  const fetchOriginal = globalThis.fetch;
+  const arquivos = [
+    'suscetibilidade-goiana.geojson',
+    'setores-historicos-goiana.geojson',
+    'geologia-goiana.geojson',
+  ];
+  globalThis.fetch = async (input) => {
+    const nomeArquivo = arquivos.find((arquivo) => String(input).endsWith(arquivo));
+    if (!nomeArquivo) throw new Error(`Camada de teste inesperada: ${String(input)}`);
+    const conteudo = await readFile(new URL(`../public/camadas/${nomeArquivo}`, import.meta.url));
+    return new Response(conteudo, { status: 200 });
+  };
 
-  for (const familia of familias) {
-    contagem[familia.nivelRisco]++;
+  try {
+    const { pontos } = await carregarDemonstracao('');
+    const avaliadas = pontos.map((familia) => ({
+      familia,
+      risco: calcularRiscoTerritorial(familia.longitude, familia.latitude),
+    }));
+    const associadosASuscetibilidade = avaliadas.filter(({ risco }) =>
+      risco.inundacao !== null ||
+      risco.movimento !== null ||
+      (risco.distanciaSuscetibilidadeMetros !== null &&
+        risco.distanciaSuscetibilidadeMetros <= 250),
+    );
+    const niveis = new Set(avaliadas.map(({ risco }) => risco.nivel));
+
+    assert.equal(pontos.length, 50);
+    assert.ok(associadosASuscetibilidade.length >= 10);
+    assert.ok(niveis.size >= 2);
+    for (const { familia, risco } of avaliadas) {
+      assert.ok(dentroDeGoiana(familia.longitude, familia.latitude));
+      assert.equal(familia.nivelRisco, risco.nivel);
+    }
+  } finally {
+    globalThis.fetch = fetchOriginal;
   }
-
-  // Allow some variance due to randomness
-  assert.ok(contagem.alto >= 250 && contagem.alto <= 350, `alto: ${contagem.alto}`);
-  assert.ok(contagem.medio >= 350 && contagem.medio <= 450, `medio: ${contagem.medio}`);
-  assert.ok(contagem.baixo >= 250 && contagem.baixo <= 350, `baixo: ${contagem.baixo}`);
 });
 
 test('criarCadastroDemonstrativo converte DadosFamilia para CadastroFamilia corretamente', () => {

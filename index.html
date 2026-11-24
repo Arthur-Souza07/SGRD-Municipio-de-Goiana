@@ -6,6 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="description" content="Gestão em campo da Defesa Civil de Goiana: famílias, mapa social e contexto ambiental." />
+    <script>
+      (function () {
+        var stored = localStorage.getItem('theme-mode');
+        var theme;
+        if (stored === 'light' || stored === 'dark') {
+          theme = stored;
+        } else {
+          var hour = new Date().getHours();
+          theme = hour >= 6 && hour < 18 ? 'light' : 'dark';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
     <title>SGRD | Defesa Civil de Goiana</title>
   </head>
   <body>

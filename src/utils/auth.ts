@@ -122,7 +122,10 @@ export async function handleRegister(data: RegisterData): Promise<void> {
     throw new Error('Erro simulado no servidor');
   }
 
-  alert(`Cadastro enviado!\n\n${JSON.stringify(data, null, 2)}`);
+  // Use console.log instead of alert() to avoid blocking the main thread
+  // which breaks Vite HMR connection in development
+  console.log('%c✅ Cadastro realizado com sucesso!', 'color: #16a34a; font-weight: bold; font-size: 14px;');
+  console.log('Dados:', data);
 }
 
 /**
@@ -140,5 +143,8 @@ export async function handleLogin(creds: LoginCredentials): Promise<void> {
     throw new Error('Credenciais inválidas');
   }
 
-  alert(`Login tentado:\nCPF/E-mail: ${creds.identifier}`);
+  // Use console.log instead of alert() to avoid blocking the main thread
+  // which breaks Vite HMR connection in development
+  console.log('%c✅ Login realizado!', 'color: #16a34a; font-weight: bold; font-size: 14px;');
+  console.log('CPF/E-mail:', creds.identifier);
 }

@@ -1,23 +1,43 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, MapPin, Edit2, Trash2 } from 'lucide-react';
 import { ESTILOS_RISCO } from '@/features/mapa/lib/pontos';
 import { nomeDaFamilia } from '@/features/mapa/lib/familias';
 import type { CadastroFamilia } from '@/features/mapa/lib/familias';
+import ProtectedAction from '@/components/ui/ProtectedAction';
 
 const TAMANHO = 10;
+interface ListaFamiliasProps {
+  familias: readonly CadastroFamilia[];
+  aoSelecionar: (familia: CadastroFamilia) => void;
+  aoLocalizar: (familia: CadastroFamilia) => void;
+  aoEditar?: (familia: CadastroFamilia) => void;
+  aoExcluir?: (familia: CadastroFamilia) => void;
+}
+
 export default function ListaFamilias({
   familias,
   aoSelecionar,
   aoLocalizar,
-}: {
-  familias: readonly CadastroFamilia[];
-  aoSelecionar: (familia: CadastroFamilia) => void;
-  aoLocalizar: (familia: CadastroFamilia) => void;
-}) {
+  aoEditar,
+  aoExcluir,
+}: ListaFamiliasProps) {
   const [pagina, setPagina] = useState(0);
   const totalPaginas = Math.max(1, Math.ceil(familias.length / TAMANHO));
   const paginaAtual = Math.min(pagina, totalPaginas - 1);
   const inicio = paginaAtual * TAMANHO;
+
+  const handleEdit = useCallback((familia: CadastroFamilia) => {
+    if (aoEditar) {
+      aoEditar(familia);
+    }
+  }, [aoEditar]);
+
+  const handleDelete = useCallback((familia: CadastroFamilia) => {
+    if (aoExcluir) {
+      aoExcluir(familia);
+    }
+  }, [aoExcluir]);
+
   return (
     <section className="painel-cadastros" aria-labelledby="titulo-cadastros">
       <header>
@@ -40,6 +60,7 @@ export default function ListaFamilias({
               <th scope="col">Representante</th>
               <th scope="col">Risco informado</th>
               <th scope="col">Consulta</th>
+              {(aoEditar || aoExcluir) && <th scope="col">Ações</th>}
             </tr>
           </thead>
           <tbody>
@@ -87,6 +108,54 @@ export default function ListaFamilias({
                     </button>
                   </div>
                 </td>
+                {(aoEditar || aoExcluir) && (
+                  <td>
+                    <div className="acoes-lista">
+                      {aoEditar && (
+                        <ProtectedAction
+                          actionType="edit"
+                          requireReauth={true}
+                          onConfirm={() => handleEdit(familia)}
+                          confirmPhrase="EDITAR"
+                          title="Editar cadastro"
+                          description="Você está prestes a modificar os dados deste cadastro. Esta ação requer autorização."
+                        >
+                          {({ trigger, isActive }) => (
+                            <button
+                              className={`botao-icone ${isActive ? 'active' : ''}`}
+                              type="button"
+                              onClick={trigger}
+                              aria-label={`Editar cadastro de ${nomeDaFamilia(familia)}`}
+                            >
+                              <Edit2 size={17} />
+                            </button>
+                          )}
+                        </ProtectedAction>
+                      )}
+                      {aoExcluir && (
+                        <ProtectedAction
+                          actionType="delete"
+                          requireReauth={true}
+                          onConfirm={() => handleDelete(familia)}
+                          confirmPhrase="EXCLUIR"
+                          title="Excluir cadastro"
+                          description="Esta ação é irreversível. O cadastro será removido permanentemente. Tem certeza?"
+                        >
+                          {({ trigger, isActive }) => (
+                            <button
+                              className={`botao-icone botao-perigo ${isActive ? 'active' : ''}`}
+                              type="button"
+                              onClick={trigger}
+                              aria-label={`Excluir cadastro de ${nomeDaFamilia(familia)}`}
+                            >
+                              <Trash2 size={17} />
+                            </button>
+                          )}
+                        </ProtectedAction>
+                      )}
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
