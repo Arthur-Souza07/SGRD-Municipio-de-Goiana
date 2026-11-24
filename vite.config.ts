@@ -119,6 +119,8 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       fs: path.resolve(__dirname, './src/empty-node-builtin.ts'),
+      crypto: path.resolve(__dirname, './src/empty-node-builtin.ts'),
+      stream: path.resolve(__dirname, './src/empty-node-builtin.ts'),
     }
   },
   server: { allowedHosts: ['terminal.local'] },
@@ -147,7 +149,6 @@ export default defineConfig({
     sourcemap: 'hidden',
     // Optimize chunk splitting
     rollupOptions: {
-      external: ['fs'],
       output: {
         // Manual chunk splitting for better caching (function form for TS compatibility)
         manualChunks: (id: string) => {
